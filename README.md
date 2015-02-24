@@ -1,1 +1,1 @@
-# NLP_Entity_linking
+NLP Entity linking
