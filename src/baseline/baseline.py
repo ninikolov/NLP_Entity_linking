@@ -10,7 +10,7 @@
 import csv
 # import sqlite3 # not used right now
 import os
-import pickle
+import marshal as pickle # use marshal instead of pickle bc/ better performance
 from itertools import islice
 
 # This only finds out the absolute path and directory of the file
@@ -25,8 +25,42 @@ rebuild_dict = False
 # PICKLE_FILE = "../data/pickled"
 
 # The search string (random right now)
-search_string = "lance armstrong career salesman TV"
+search_string = "hanover 96 test"
 
+class SearchQuery(object):
+    def __init__(self, search_string):
+        self.search_string = search_string
+        self.array = search_string.split()
+
+        self.search_matches = []
+    def add_match(self, match):
+        # match: SearchMatch
+        self.search_matches.append(match)
+
+    def rank_matches(self):
+        pass
+
+    def __repr__(self):
+        return "<SearchQuery: %s>" % search_string
+
+class SearchMatch(object):
+    def __init__(self, position, entities, substring):
+        self.substring = substring
+        self.position = position
+        self.entities = entities
+
+    def __repr__(self):
+        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities)
+
+class Entity(object):
+    def __init__(self, link, probability):
+        self.link = link
+        self.probability = float(probability)
+
+    def __repr__(self):
+        return "<Entity: %s %f>" % (self.link, self.probability)
+
+super_dict = {}
 
 def load_dict(file_path):
     """
@@ -35,11 +69,12 @@ def load_dict(file_path):
     :param file_path: path to dict
     :return:
     """
-    assert isinstance(str, file_path)
+    # assert isinstance(str, file_path)
     if os.path.isfile(file_path + "-pickle"):  # if already pickled
         if rebuild_dict == False:
             pickle_file = open(file_path + "-pickle", 'rb')
             return pickle.load(pickle_file)
+    global super_dict
     super_dict = build_dictionary(file_path)
     # Pickle dictionary for later use
     pickle_file = open(file_path + "-pickle", 'wb')
@@ -49,11 +84,10 @@ def load_dict(file_path):
 
 def build_dictionary(file_path):
     """
-
     :param file_path:
     :return:
     """
-    assert isinstance(str, file_path)
+    # assert isinstance(str, file_path)
     with open(file_path, "r", encoding='utf-8') as csvfile:
         # this is a csv reader
         crosswiki = csv.reader(csvfile, delimiter="\t")
@@ -111,7 +145,7 @@ def remove_shorter_terms(dictionary):
     new_dict = dict(dictionary)
     for term in dictionary.keys():
         subterms = term.split()
-        print("Subterms: ", subterms)
+        # print("Subterms: ", subterms)
         if len(subterms) == 1:
             continue
         # Check all combinations with shorter terms
@@ -119,56 +153,32 @@ def remove_shorter_terms(dictionary):
         for i in range(len(subterms) - 1, 0, -1):
             for subterm in window(subterms, i):
                 print(subterm)
-                if subterm in dictionary.keys():
-                    print("deleting ", subterm)
+                if subterm in new_dict.keys():
+                    # print("deleting ", subterm)
                     del new_dict[subterm]
     return new_dict
 
+def search_entities(search_string, entity_dict):
+    search_query = SearchQuery(search_string)
 
-super_dict = load_dict(this_dir + "/../../data/crosswikis-dict-preprocessed")
-
-search_string_arr = search_string.split()
-results_dict = {}
-for i in range(3, 0, -1):  # Try combinations with up to 3 words
-    for query_term in window(search_string_arr, n=i):
-        print("Searching for ", query_term)
-        try:
-            print(super_dict[query_term])
-            results_dict[query_term] = super_dict[query_term]
-        except KeyError:
-            print("NOT FOUND THIS KEY :(")
-
-results_dict = remove_shorter_terms(results_dict)
-print(results_dict)
-
-for key in results_dict:
-    print("\n\n\nKEY: " + key + "\n==============\n")
-    print(results_dict[key][0])
-
-
-def old_version(search_string):
-    results_dict = {}
-    # create a list from the search string, splitting at spaces
-    search_string_arr = search_string.split()
-    # how many elements in search string
-    i = len(search_string_arr)
-    while i > 0:
-        j = 0
-        while j < i:
-            # join list elements with a space
-            # check out python list indexing for more information on
-            # the slicing stuff: http://stackoverflow.com/questions/509211/explain-pythons-slice-notation
-            temp_s = " ".join(search_string_arr[j:i])
-            print(temp_s)
-
+    for i in range(3, 0, -1):  # Try combinations with up to 3 words
+        for query_term in window(search_query.array, n=i):
+            # print("Searching for ", query_term)
             try:
-                # Try to find the key in the dictionary we created (superdict)
-                # if key not found, then go to except
-                print(super_dict[temp_s])
-                results_dict[temp_s] = super_dict[temp_s]
-            except:
-                print("NOT FOUND THIS KEY :(")
+                # print(super_dict[query_term])
+                temp_result = entity_dict[query_term]
+                matches = [Entity(d[0], d[1]) for d in temp_result]
+                search_match = SearchMatch((i, i), matches, query_term)
+                search_query.add_match(search_match)
+            except KeyError:
+                pass
+                # print("NOT FOUND THIS KEY :(")
 
-            j += 1
-        i -= 1
-    return results_dict
+    # results_dict = remove_shorter_terms(results_dict)
+    # print(results_dict)
+    print(search_query.search_string + "\n==============\nEntities:\n")
+    for m in search_query.search_matches:
+        print(m)
+        # print(m.substring + ": ")
+        # print(m.entities[0])
+        # print("\n")
