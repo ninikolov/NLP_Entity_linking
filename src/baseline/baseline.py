@@ -41,7 +41,7 @@ class SearchQuery(object):
         pass
 
     def __repr__(self):
-        return "<SearchQuery: %s>" % search_string
+        return "<SearchQuery: %s>" % self.search_string
 
 class SearchMatch(object):
     def __init__(self, position, entities, substring):
