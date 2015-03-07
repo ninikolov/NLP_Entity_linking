@@ -28,6 +28,7 @@ rebuild_dict = False
 # The search string (random right now)
 # search_string = "hanover 96 test"
 #super_dict = {}
+#search_string = "hanover 96 test"
 
 def load_dict(file_path):
     """
