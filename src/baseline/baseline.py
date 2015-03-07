@@ -10,8 +10,9 @@
 import csv
 # import sqlite3 # not used right now
 import os
-import marshal as pickle # use marshal instead of pickle bc/ better performance
+import marshal as pickle  # use marshal instead of pickle bc/ better performance
 from itertools import islice
+from src.core.query import SearchQuery, SearchMatch, Entity
 
 # This only finds out the absolute path and directory of the file
 # to access the data directory
@@ -25,42 +26,8 @@ rebuild_dict = False
 # PICKLE_FILE = "../data/pickled"
 
 # The search string (random right now)
-search_string = "hanover 96 test"
-
-class SearchQuery(object):
-    def __init__(self, search_string):
-        self.search_string = search_string
-        self.array = search_string.split()
-
-        self.search_matches = []
-    def add_match(self, match):
-        # match: SearchMatch
-        self.search_matches.append(match)
-
-    def rank_matches(self):
-        pass
-
-    def __repr__(self):
-        return "<SearchQuery: %s>" % search_string
-
-class SearchMatch(object):
-    def __init__(self, position, entities, substring):
-        self.substring = substring
-        self.position = position
-        self.entities = entities
-
-    def __repr__(self):
-        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities)
-
-class Entity(object):
-    def __init__(self, link, probability):
-        self.link = link
-        self.probability = float(probability)
-
-    def __repr__(self):
-        return "<Entity: %s %f>" % (self.link, self.probability)
-
-super_dict = {}
+# search_string = "hanover 96 test"
+#super_dict = {}
 
 def load_dict(file_path):
     """
@@ -152,33 +119,34 @@ def remove_shorter_terms(dictionary):
         # Remove if smaller terms already present in dictionary
         for i in range(len(subterms) - 1, 0, -1):
             for subterm in window(subterms, i):
-                print(subterm)
+                #print(subterm)
                 if subterm in new_dict.keys():
                     # print("deleting ", subterm)
                     del new_dict[subterm]
     return new_dict
 
-def search_entities(search_string, entity_dict):
-    search_query = SearchQuery(search_string)
 
+def search_entities(search_string, entity_dict):
+    """
+    :param search_string:
+    :param entity_dict:
+    :return:
+    """
+    search_query = SearchQuery(search_string)
+    temp_dict = {}
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
         for query_term in window(search_query.array, n=i):
-            # print("Searching for ", query_term)
             try:
-                # print(super_dict[query_term])
                 temp_result = entity_dict[query_term]
                 matches = [Entity(d[0], d[1]) for d in temp_result]
-                search_match = SearchMatch((i, i), matches, query_term)
-                search_query.add_match(search_match)
+                temp_dict[query_term] = matches
             except KeyError:
-                pass
                 # print("NOT FOUND THIS KEY :(")
-
-    # results_dict = remove_shorter_terms(results_dict)
-    # print(results_dict)
-    print(search_query.search_string + "\n==============\nEntities:\n")
-    for m in search_query.search_matches:
-        print(m)
-        # print(m.substring + ": ")
-        # print(m.entities[0])
-        # print("\n")
+                pass
+    temp_dict = remove_shorter_terms(temp_dict)
+    for query_term, entities in temp_dict.items():
+        # TODO: Fix indices to match actual location
+        search_match = SearchMatch((i, i), entities, query_term)
+        search_query.add_match(search_match)
+    del temp_dict
+    search_query.visualize()
