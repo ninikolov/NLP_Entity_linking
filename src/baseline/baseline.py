@@ -10,9 +10,10 @@
 import csv
 # import sqlite3 # not used right now
 import os
-import marshal as pickle  # use marshal instead of pickle bc/ better performance
 from itertools import islice
-from src.core.query import SearchQuery, SearchMatch, Entity
+from core.query import SearchQuery, SearchMatch, Entity
+import sqlite3
+import marshal
 
 # This only finds out the absolute path and directory of the file
 # to access the data directory
@@ -21,70 +22,59 @@ this_dir = os.path.dirname(this_file)
 rebuild_dict = False
 
 # this could be used for a future database
-# DATABASE = "../data/entitys.db"
+DATABASE = this_dir + "../data/entitys.db"
 
-# PICKLE_FILE = "../data/pickled"
-
-# The search string (random right now)
-# search_string = "hanover 96 test"
 #super_dict = {}
-#search_string = "hanover 96 test"
 
 def load_dict(file_path):
-    """
-    Load pickled dictionary if available
-    if not, build dictionary
-    :param file_path: path to dict
-    :return:
-    """
-    # assert isinstance(str, file_path)
-    if os.path.isfile(file_path + "-pickle"):  # if already pickled
-        if rebuild_dict == False:
-            pickle_file = open(file_path + "-pickle", 'rb')
-            return pickle.load(pickle_file)
-    global super_dict
-    super_dict = build_dictionary(file_path)
-    # Pickle dictionary for later use
-    pickle_file = open(file_path + "-pickle", 'wb')
-    pickle.dump(super_dict, pickle_file)
-    return super_dict
-
-
-def build_dictionary(file_path):
     """
     :param file_path:
     :return:
     """
     # assert isinstance(str, file_path)
-    with open(file_path, "r", encoding='utf-8') as csvfile:
-        # this is a csv reader
-        crosswiki = csv.reader(csvfile, delimiter="\t")
-        first_row = next(crosswiki)
-        first_search_word = first_row[0]
-        super_dict = {}
-        super_dict[first_search_word] = []
+    conn = sqlite3.connect(file_path + "-db.db")
+    c = conn.cursor()
+    try:
+        c.execute('''CREATE TABLE entity_mapping
+             (words text, entities blob)''')
 
-        for row in crosswiki:
-            # Loop through all the rows in the csv
-            # row[0] contains the search string
-            # if current row[0] word is different,
-            # create new key in the dictionary and add a empty list
-            if row[0] != first_search_word:
-                super_dict[row[0]] = []
-                first_search_word = row[0]
+        with open(file_path, "r", encoding='utf-8') as csvfile:
+            # this is a csv reader
+            crosswiki = csv.reader(csvfile, delimiter="\t")
+            first_row = next(crosswiki)
+            first_search_word = first_row[0]
+            super_dict = {}
+            super_dict[first_search_word] = []
 
-            # unfortunately, the csv file is not consistent
-            # so the the second part (probability and entity)
-            # are seperated by a space instead of a tab
-            # splitting that!
-            row_ = row[1].split()
+            for row in crosswiki:
+                # Loop through all the rows in the csv
+                # row[0] contains the search string
+                # if current row[0] word is different,
+                # create new key in the dictionary and add a empty list
+                if row[0] != first_search_word:
+                    super_dict[row[0]] = []
+                    first_search_word = row[0]
 
-            # adding the entity and prob to the list as a dictionary
-            super_dict[row[0]].append((row_[1], row_[0]))
+                # unfortunately, the csv file is not consistent
+                # so the the second part (probability and entity)
+                # are seperated by a space instead of a tab
+                # splitting that!
+                row_ = row[1].split()
 
-        print("Key Dict created...")
-        return super_dict
+                # adding the entity and prob to the list as a dictionary
+                super_dict[row[0]].append((row_[1], row_[0]))
 
+            print("Key Dict created...")
+            for key in super_dict.keys():
+                c.execute('insert into entity_mapping values(?, ?)', (key, marshal.dumps(super_dict[key])))
+
+            conn.commit()
+            print("Database created")
+
+    except sqlite3.OperationalError:
+        print("Database already exists, cool!")
+
+    return conn
 
 def window(seq, n=3):
     """
@@ -125,21 +115,27 @@ def remove_shorter_terms(dictionary):
                     # print("deleting ", subterm)
                     del new_dict[subterm]
     return new_dict
+import marshal
 
-
-def search_entities(search_string, entity_dict):
+def search_entities(search_string, db_conn):
     """
     :param search_string:
-    :param entity_dict:
+    :param db_conn:
     :return:
     """
     search_query = SearchQuery(search_string)
     temp_dict = {}
+
+    c = db_conn.cursor()
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
         for query_term in window(search_query.array, n=i):
             try:
-                temp_result = entity_dict[query_term]
-                matches = [Entity(d[0], d[1]) for d in temp_result]
+                c.execute("select * from entity_mapping where words = ?", (query_term,))
+                res = c.fetchone()
+                if not res:
+                    continue
+                # temp_result = entity_dict[query_term]
+                matches = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
                 temp_dict[query_term] = matches
             except KeyError:
                 # print("NOT FOUND THIS KEY :(")

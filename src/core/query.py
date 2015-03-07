@@ -1,4 +1,15 @@
 # -*- coding: utf-8 -*-
+class TermColor:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
 
 class SearchQuery(object):
     def __init__(self, search_string):
@@ -31,10 +42,10 @@ class SearchQuery(object):
         return self.search_string
 
     def visualize(self):
-        print("="*40, "\n Query: \"" + self.search_string, "\"\nEntities:\n")
+        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, self.search_string, TermColor.END, ""))
         for substr, entity in self.choose_best_entities().items():
-            print("Text: "+substr + " | ", entity)
-        print("="*40 + "\n")
+            print("{0:<25} | {1}".format(substr, entity))
+        print("-"*80 + "\n")
 
 class SearchMatch(object):
     def __init__(self, position, entities, substring):
