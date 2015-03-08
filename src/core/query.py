@@ -16,6 +16,7 @@ class SearchQuery(object):
         self.search_string = search_string
         self.array = search_string.split()
         self.search_matches = []
+        self.true_entities = []
 
     def add_match(self, match):
         # match: SearchMatch
@@ -28,15 +29,15 @@ class SearchQuery(object):
         #return "<SearchQuery: %s>" % self.search_string
         return self.search_string
 
-    def choose_best_entities(self):
-        """
-        TODO: Figure out a better way to do this
-        """
-        best_entities = {}
-        for match in self.search_matches:
-            substring, entity = match.choose_best_match()
-            best_entities[substring] = entity
-        return best_entities
+    # def choose_best_entities(self):
+    #     """
+    #     TODO: Figure out a better way to do this
+    #     """
+    #     best_entities = {}
+    #     for match in self.search_matches:
+    #         substring, entity = match.choose_best_match()
+    #         best_entities[substring] = entity
+    #     return best_entities
 
     def get_search_string(self):
         return self.search_string
@@ -48,18 +49,19 @@ class SearchQuery(object):
         print("-"*80 + "\n")
 
 class SearchMatch(object):
-    def __init__(self, position, entities, substring):
+    def __init__(self, position, word_count, entity, substring):
         self.substring = substring
         self.position = position
-        self.entities = entities
+        self.word_count = word_count
+        self.entity = entity               
 
     def __repr__(self):
-        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities)
+        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entity)
 
-    def choose_best_match(self):
-        """
-        """
-        return self.substring, self.entities[0]
+    # def choose_best_match(self):
+    #     """
+    #     """
+    #     return self.substring, self.entities[0]
 
 class Entity(object):
     def __init__(self, link, probability):

@@ -32,7 +32,8 @@ class QueryParser():
 
     def __build_queries(self):
         """Populate our array of SearchQuery items.
-        TODO: Add actual position of term in query. Currently 0 by default
+        TODO: Add actual position and length of query of term in query
+        Both Currently 0 by default
         """
         self.query_array = []
         for query in self.soup.find_all("query"):
@@ -43,6 +44,6 @@ class QueryParser():
                     e = Entity(ann.find_all("target")[0].text, 0)
                 except IndexError: # No entity here
                     e = Entity("None", 0)
-                new_query.add_match(SearchMatch(0, [e], ann.find_all("span")[0].text))
+                new_query.true_entities.append(SearchMatch(0, 0, [e], ann.find_all("span")[0].text))
             self.query_array.append(new_query)
 

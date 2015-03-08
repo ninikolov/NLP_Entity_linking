@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<webscope numqueries="528" numsessions="187">
+<session id="yahoo-60" numqueries="1">
+      <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="true" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[google]]></text>
+         <annotation main="true">
+            <span><![CDATA[google]]></span>
+            <target wiki-id="1092923"><![CDATA[http://en.wikipedia.org/wiki/Google]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="trec-2010-132" numqueries="2">
+      <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[disneyland special offers]]></text>
+         <annotation main="true">
+            <span><![CDATA[disneyland]]></span>
+            <target wiki-id="15937788"><![CDATA[http://en.wikipedia.org/wiki/Disneyland]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[special offers]]></span>
+            <target wiki-id="239874"><![CDATA[http://en.wikipedia.org/wiki/Sales_promotion]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="2">
+         <text><![CDATA[disneyland ]]></text>
+         <annotation main="true">
+            <span><![CDATA[disneyland]]></span>
+            <target wiki-id="15937788"><![CDATA[http://en.wikipedia.org/wiki/Disneyland]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="yahoo-164" numqueries="3">
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[anchors resign on air]]></text>
+         <annotation main="true">
+            <span><![CDATA[anchors]]></span>
+            <target wiki-id="156746"><![CDATA[http://en.wikipedia.org/wiki/News_presenter]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[resign]]></span>
+            <target wiki-id="481387"><![CDATA[http://en.wikipedia.org/wiki/Resignation]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[on air]]></span>
+            <target wiki-id="113604"><![CDATA[http://en.wikipedia.org/wiki/Broadcasting]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="2">
+         <text><![CDATA[Anchors resign on air]]></text>
+         <annotation main="true">
+            <span><![CDATA[Anchors]]></span>
+            <target wiki-id="156746"><![CDATA[http://en.wikipedia.org/wiki/News_presenter]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[resign]]></span>
+            <target wiki-id="481387"><![CDATA[http://en.wikipedia.org/wiki/Resignation]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[on air]]></span>
+            <target wiki-id="113604"><![CDATA[http://en.wikipedia.org/wiki/Broadcasting]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="3">
+         <text><![CDATA[dirty jobs canceled]]></text>
+         <annotation main="false">
+            <span><![CDATA[dirty jobs]]></span>
+            <target wiki-id="2525506"><![CDATA[http://en.wikipedia.org/wiki/Dirty_Jobs]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[canceled]]></span>
+            <target wiki-id="11752874"><![CDATA[http://en.wikipedia.org/wiki/Cancellation_(television)]]></target>
+         </annotation>
+      </query>
+   </session>
+</webscope>

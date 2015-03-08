@@ -115,31 +115,51 @@ def remove_shorter_terms(dictionary):
                     # print("deleting ", subterm)
                     del new_dict[subterm]
     return new_dict
-import marshal
 
-def search_entities(search_string, db_conn):
+def search_entities(search_query, db_conn):
     """
     :param search_string:
     :param db_conn:
     :return:
     """
-    search_query = SearchQuery(search_string)
-    temp_dict = {}
-
+    #search_query = SearchQuery(search_string)
+    #print(search_query, "\n", search_query.true_entities, "\n \n" ) 
+    print("\n", "="*80, "\n")
+    print("####", search_query.search_string)
+    
     c = db_conn.cursor()
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
+        pos = -1 #position of the words in the string
+        print("-"*80, "\n @range ", i)
         for query_term in window(search_query.array, n=i):
+            pos +=1 #windows is moved to the right
+            print("    LF TERM:", query_term)
             try:
                 c.execute("select * from entity_mapping where words = ?", (query_term,))
                 res = c.fetchone()
                 if not res:
+                    print("    NOT FOUND")
                     continue
                 # temp_result = entity_dict[query_term]
-                matches = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
-                temp_dict[query_term] = matches
+
+                entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
+                   
+                best_search_match = SearchMatch(pos, i, entities[0], query_term)
+                for previous_matches in search_query.search_matches:
+                    print("         *", previous_matches.position, " ", 
+                        previous_matches.substring, " (", previous_matches.word_count, ")")
+                     
+                search_query.add_match(best_search_match)
+                print("    ",best_search_match)
+
+                # for d in marshal.loads(res[1]):     
+                #     print(d, "\n") 
+                
+                # temp_dict[query_term] = matches
             except KeyError:
-                # print("NOT FOUND THIS KEY :(")
-                pass
+                print("KEY ERROR")
+                #pass
+    return
     temp_dict = remove_shorter_terms(temp_dict)
     for query_term, entities in temp_dict.items():
         # TODO: Fix indices to match actual location
