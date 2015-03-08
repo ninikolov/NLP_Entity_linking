@@ -30,6 +30,8 @@ def main():
         #print(q.true_entities)
         entities = baseline.search_entities(q, db_conn)
 
+    for q in parser.query_array:
+        q.visualize()
 
 if __name__ == "__main__":
     main()

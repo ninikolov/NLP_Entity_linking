@@ -92,29 +92,45 @@ def window(seq, n=3):
         result = result[1:] + (elem,)
         yield " ".join(result)
 
+def add_new_term_check_overlap(new_match, search_query):
+    """
+    Checks if the new search term is overlapping with 
+    previous search terms in the query, based on their 
+    relative positions. 
+    * If it is overlapping and shorter, it is not added
+    (ie. the longer string is kept)
+    * If it is overlapping and of same length, the entity 
+    with highest probability is kept.
 
-def remove_shorter_terms(dictionary):
+    :param new_match: 
+    :return: Returns True if it is overlapping or 
     """
-    Remove short terms if there are any longer terms
-    :param dictionary:
-    :return:
-    """
-    assert isinstance(dictionary, dict)
-    new_dict = dict(dictionary)
-    for term in dictionary.keys():
-        subterms = term.split()
-        # print("Subterms: ", subterms)
-        if len(subterms) == 1:
-            continue
-        # Check all combinations with shorter terms
-        # Remove if smaller terms already present in dictionary
-        for i in range(len(subterms) - 1, 0, -1):
-            for subterm in window(subterms, i):
-                #print(subterm)
-                if subterm in new_dict.keys():
-                    # print("deleting ", subterm)
-                    del new_dict[subterm]
-    return new_dict
+    
+    for previous_match in search_query.search_matches:
+        print("         * prev:", previous_match.position, " ", 
+            previous_match.substring, " (", previous_match.word_count, ")")
+
+        if (( previous_match.position < new_match.position + new_match.word_count <
+            previous_match.position + previous_match.word_count) or
+            (previous_match.position < new_match.position < 
+            previous_match.position + previous_match.word_count)):
+            #there is an overlap
+            if  (new_match.word_count < previous_match.word_count):
+                #new term is shorter
+                print("         *** SHORTER >> SKIP")
+                return
+
+            assert(new_match.word_count == previous_match.word_count)
+            if (new_match.entity.probability < previous_match.entity.probability):
+                #new term is of same length but less probable
+                search_query.search_matches.remove(previous_match)
+                print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
+                return
+    # there is no overlap with any previous terms 
+    # => Add the Entity to the search_matches array !
+    search_query.add_match(new_match)
+    print("    ",new_match)
+
 
 def search_entities(search_query, db_conn):
     """
@@ -143,15 +159,14 @@ def search_entities(search_query, db_conn):
                 # temp_result = entity_dict[query_term]
 
                 entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
-                   
-                best_search_match = SearchMatch(pos, i, entities[0], query_term)
-                for previous_matches in search_query.search_matches:
-                    print("         *", previous_matches.position, " ", 
-                        previous_matches.substring, " (", previous_matches.word_count, ")")
-                     
-                search_query.add_match(best_search_match)
-                print("    ",best_search_match)
+                
+                #Take the highest ranked entity in the crosswiki
+                new_match = SearchMatch(pos, i, entities[0], query_term)
+                
 
+                add_new_term_check_overlap(new_match, search_query)
+                
+                
                 # for d in marshal.loads(res[1]):     
                 #     print(d, "\n") 
                 
@@ -159,11 +174,6 @@ def search_entities(search_query, db_conn):
             except KeyError:
                 print("KEY ERROR")
                 #pass
-    return
-    temp_dict = remove_shorter_terms(temp_dict)
-    for query_term, entities in temp_dict.items():
-        # TODO: Fix indices to match actual location
-        search_match = SearchMatch((i, i), entities, query_term)
-        search_query.add_match(search_match)
-    del temp_dict
-    search_query.visualize()
+
+
+    

@@ -44,8 +44,8 @@ class SearchQuery(object):
 
     def visualize(self):
         print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, self.search_string, TermColor.END, ""))
-        for substr, entity in self.choose_best_entities().items():
-            print("{0:<25} | {1}".format(substr, entity))
+        for match in self.search_matches:
+            print("{0:<25} | {1}".format(match.substring, match.entity))
         print("-"*80 + "\n")
 
 class SearchMatch(object):
