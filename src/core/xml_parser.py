@@ -44,6 +44,7 @@ class QueryParser():
                     e = Entity(ann.find_all("target")[0].text, 0)
                 except IndexError: # No true_entitiesntity here
                     e = Entity("None", 0)
-                new_query.true_entities.append(SearchMatch(0, 0, [e], ann.find_all("span")[0].text))
+                new_query.true_entities.append(SearchMatch(0, 0, [e], ann.find_all("span")[0].text)) #TODO:set correct positions
+                #print("LINK: " + e.link)
             self.query_array.append(new_query)
 

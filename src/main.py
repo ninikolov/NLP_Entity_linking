@@ -4,6 +4,7 @@ import os
 
 from baseline import baseline
 from core.xml_parser import QueryParser
+from core.score import lazy_F1
 
 
 THIS_FILE = os.path.realpath(__file__)
@@ -32,6 +33,10 @@ def main():
 
     for q in parser.query_array:
         q.visualize()
+	
+	#evaluate baseline solution
+    lazy_F1(parser)
+	
 
 if __name__ == "__main__":
     main()
