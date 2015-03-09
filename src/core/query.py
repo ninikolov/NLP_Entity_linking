@@ -11,10 +11,11 @@ class TermColor:
    UNDERLINE = '\033[4m'
    END = '\033[0m'
 
+import re
 class SearchQuery(object):
     def __init__(self, search_string):
         self.search_string = search_string
-        self.array = search_string.split()
+        self.array = re.findall(r"[\w]+", search_string)
         self.search_matches = []
         self.true_entities = []
 

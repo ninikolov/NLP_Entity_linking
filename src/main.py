@@ -6,11 +6,17 @@ from baseline import baseline
 from core.xml_parser import QueryParser
 from core.score import lazy_F1
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--testfile", "-t", help="Select XML file",
+		    default="query-data-short-set.xml")
+
+args = parser.parse_args()
 
 THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../data/"
-TRAIN_XML = "query-data-short-set.xml"
+TRAIN_XML = args.testfile
 DICT = "crosswikis-dict-preprocessed"
 
 

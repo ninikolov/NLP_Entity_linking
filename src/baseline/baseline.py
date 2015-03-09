@@ -3,9 +3,8 @@
 # baseline code
 
 # TODO
-# - Use Pickle for storing the dictionary for faster loading
-# - Investigate SQL and NOSQL options (sqlite, mongodb, ...)
-# - Investigate BeautifulSoup for XML processing
+#    Use better split (Questionmark is a problem!! So seperate at all chars 
+# like ?!:, etc.
 
 import csv
 # import sqlite3 # not used right now
