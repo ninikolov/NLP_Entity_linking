@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from bs4 import BeautifulSoup
+
 from core.query import SearchQuery, SearchMatch, Entity
+
 
 # XML Document documentation
 # session -> mult. query
