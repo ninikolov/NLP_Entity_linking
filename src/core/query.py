@@ -46,18 +46,24 @@ class SearchQuery(object):
     def visualize(self):
         print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, self.search_string, TermColor.END, ""))
         for match in self.search_matches:
-            print("{0:<25} | {1}".format(match.substring, match.entity))
+            print("{0:<25} | {1}".format(match.substring, match.entities))
         print("-"*80 + "\n")
 
 class SearchMatch(object):
-    def __init__(self, position, word_count, entity, substring):
+    def __init__(self, position, word_count, entities, substring):
         self.substring = substring
         self.position = position
         self.word_count = word_count
-        self.entity = entity               
+        self.entities = entities
 
     def __repr__(self):
-        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entity)
+        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities)
+
+    def get_entities(self, limit=5):
+        if len(self.entities) <= limit:
+            return self.entities
+        else:
+            return self.entities[:limit]
 
     # def choose_best_match(self):
     #     """

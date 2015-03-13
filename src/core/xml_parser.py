@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import sqlite3
+import marshal
+
 from bs4 import BeautifulSoup
 
-from core.query import SearchQuery, SearchMatch, Entity
-
+from src.core.query import SearchQuery, SearchMatch, Entity
 
 # XML Document documentation
 # session -> mult. query
@@ -49,4 +51,55 @@ class QueryParser():
                 new_query.true_entities.append(SearchMatch(0, 0, [e], ann.find_all("span")[0].text)) #TODO:set correct positions
                 #print("LINK: " + e.link)
             self.query_array.append(new_query)
+
+
+def load_dict(file_path):
+    """
+    :param file_path:
+    :return:
+    """
+    # assert isinstance(str, file_path)
+    conn = sqlite3.connect(file_path + "-db.db")
+    c = conn.cursor()
+    try:
+        c.execute('''CREATE TABLE entity_mapping
+             (words TEXT, entities BLOB)''')
+
+        with open(file_path, "r", encoding='utf-8') as csvfile:
+            # this is a csv reader
+            crosswiki = csv.reader(csvfile, delimiter="\t")
+            first_row = next(crosswiki)
+            first_search_word = first_row[0]
+            super_dict = {}
+            super_dict[first_search_word] = []
+
+            for row in crosswiki:
+                # Loop through all the rows in the csv
+                # row[0] contains the search string
+                # if current row[0] word is different,
+                # create new key in the dictionary and add a empty list
+                if row[0] != first_search_word:
+                    super_dict[row[0]] = []
+                    first_search_word = row[0]
+
+                # unfortunately, the csv file is not consistent
+                # so the the second part (probability and entity)
+                # are seperated by a space instead of a tab
+                # splitting that!
+                row_ = row[1].split()
+
+                # adding the entity and prob to the list as a dictionary
+                super_dict[row[0]].append((row_[1], row_[0]))
+
+            print("Key Dict created...")
+            for key in super_dict.keys():
+                c.execute('INSERT INTO entity_mapping VALUES(?, ?)', (key, marshal.dumps(super_dict[key])))
+
+            conn.commit()
+            print("Database created")
+
+    except sqlite3.OperationalError:
+        print("Database already exists, cool!")
+
+    return conn
 

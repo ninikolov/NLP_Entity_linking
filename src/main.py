@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import argparse
 
 from baseline import baseline
-from core.xml_parser import QueryParser
+from core.xml_parser import QueryParser, load_dict
 from core.score import lazy_F1
-
-import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
 		    default="query-data-short-set.xml")
@@ -30,7 +29,7 @@ def main():
     # 	# if (text is not None):
     # 	# 	print(text.text)
 
-    db_conn = baseline.load_dict(DATA_DIR + DICT)
+    db_conn = load_dict(DATA_DIR + DICT)
     
     for q in parser.query_array:
     #for q in parser.get_all_queries_text():
