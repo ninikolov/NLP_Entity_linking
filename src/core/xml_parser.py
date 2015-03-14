@@ -2,10 +2,12 @@
 
 import sqlite3
 import marshal
+import csv
 
 from bs4 import BeautifulSoup
 
-from src.core.query import SearchQuery, SearchMatch, Entity
+from .query import SearchQuery, SearchMatch, Entity
+
 
 # XML Document documentation
 # session -> mult. query

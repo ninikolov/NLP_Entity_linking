@@ -10,9 +10,12 @@
 import os
 from itertools import islice
 import marshal
+import os.path
+import sys
 
-from src.core.query import SearchMatch, Entity
 
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+from core.query import Entity, SearchMatch
 
 # This only finds out the absolute path and directory of the file
 # to access the data directory
@@ -64,7 +67,7 @@ def add_new_term_check_overlap(new_match, search_query):
                       previous_match.position + previous_match.word_count) or
                 (previous_match.position < new_match.position <
                          previous_match.position + previous_match.word_count)):
-            #there is an overlap
+            # there is an overlap
             if (new_match.word_count < previous_match.word_count):
                 #new term is shorter
                 print("         *** SHORTER >> SKIP")
@@ -79,7 +82,7 @@ def add_new_term_check_overlap(new_match, search_query):
             ##                print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
             ##                return
 
-            if (new_match.entity.probability < previous_match.entity.probability):
+            if (new_match.entities[0].probability < previous_match.entities[0].probability):
                 #new term is of same length but less probable
                 print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
                 return
@@ -98,7 +101,7 @@ def search_entities(search_query, db_conn):
     :param db_conn:
     :return:
     """
-    #search_query = SearchQuery(search_string)
+    # search_query = SearchQuery(search_string)
     #print(search_query, "\n", search_query.true_entities, "\n \n" ) 
     print("\n", "=" * 80, "\n")
     print("####", search_query.search_string)
@@ -119,7 +122,6 @@ def search_entities(search_query, db_conn):
                 # temp_result = entity_dict[query_term]
 
                 entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
-
 
                 #Take the highest ranked entity in the crosswiki
                 new_match = SearchMatch(pos, i, entities, query_term)
