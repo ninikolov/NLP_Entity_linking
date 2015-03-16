@@ -11,7 +11,7 @@ import os
 from itertools import islice
 import marshal
 
-from src.core.query import SearchMatch, Entity
+from core.query import SearchMatch, Entity
 
 
 # This only finds out the absolute path and directory of the file
@@ -71,13 +71,6 @@ def add_new_term_check_overlap(new_match, search_query):
                 return
 
             assert (new_match.word_count == previous_match.word_count)
-            #actually wrong!!corrected afterwards
-
-            ##            if (new_match.entity.probability < previous_match.entity.probability):
-            ##                #new term is of same length but less probable
-            ##                search_query.search_matches.remove(previous_match)
-            ##                print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
-            ##                return
 
             if (new_match.entity.probability < previous_match.entity.probability):
                 #new term is of same length but less probable
@@ -86,8 +79,7 @@ def add_new_term_check_overlap(new_match, search_query):
             else:
                 #remove old match
                 search_query.search_matches.remove(previous_match)
-    # there is no overlap with any previous terms or new match has higher probability!
-    # => Add the Entity to the search_matches array !
+
     search_query.add_match(new_match)
     print("    ", new_match)
 

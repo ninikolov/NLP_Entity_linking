@@ -46,7 +46,7 @@ class SearchQuery(object):
     def visualize(self):
         print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, self.search_string, TermColor.END, ""))
         for match in self.search_matches:
-            print("{0:<25} | {1}".format(match.substring, match.entities))
+            print("{0:<25} | {1}".format(match.substring, match.entities[0]))
         print("-"*80 + "\n")
 
 class SearchMatch(object):
@@ -55,9 +55,10 @@ class SearchMatch(object):
         self.position = position
         self.word_count = word_count
         self.entities = entities
+        self.rating = "" # "true positive", "false positive", "false negative"
 
     def __repr__(self):
-        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities)
+        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities[0])
 
     def get_entities(self, limit=5):
         if len(self.entities) <= limit:

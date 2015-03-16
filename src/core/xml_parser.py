@@ -2,10 +2,11 @@
 
 import sqlite3
 import marshal
+import re
 
 from bs4 import BeautifulSoup
 
-from src.core.query import SearchQuery, SearchMatch, Entity
+from core.query import SearchQuery, SearchMatch, Entity
 
 # XML Document documentation
 # session -> mult. query
@@ -48,7 +49,22 @@ class QueryParser():
                     e = Entity(ann.find_all("target")[0].text, 0)
                 except IndexError: # No true_entitiesntity here
                     e = Entity("None", 0)
-                new_query.true_entities.append(SearchMatch(0, 0, [e], ann.find_all("span")[0].text)) #TODO:set correct positions
+
+                span = ann.find_all("span")[0].text
+
+                #find the amount of word separators in the string before the occurence of span
+                str_before = re.match(r"([.]*)%s" % span, new_query.search_string)
+                print(new_query.search_string)
+                print(span)
+                if str_before == None:
+                    pos = 0
+                    print("pos = 0!")
+                else:
+                    pos = len(re.findall(r"[\W]", str_before.group(0)))
+                    print(str_before.group(0), " pos found:", pos, "\n")
+                assert(isinstance(pos, int))
+
+                new_query.true_entities.append(SearchMatch(pos, len(span.split()), [e], span))
                 #print("LINK: " + e.link)
             self.query_array.append(new_query)
 
