@@ -59,8 +59,8 @@ def add_new_term_check_overlap(new_match, search_query):
     """
 
     for previous_match in search_query.search_matches:
-        print("         * prev:", previous_match.position, " ",
-              previous_match.substring, " (", previous_match.word_count, ")")
+        # print("         * prev:", previous_match.position, " ",
+        # previous_match.substring, " (", previous_match.word_count, ")")
 
         if (( previous_match.position < new_match.position + new_match.word_count <
                       previous_match.position + previous_match.word_count) or
@@ -69,21 +69,21 @@ def add_new_term_check_overlap(new_match, search_query):
             # there is an overlap
             if (new_match.word_count < previous_match.word_count):
                 #new term is shorter
-                print("         *** SHORTER >> SKIP")
+                # print("         *** SHORTER >> SKIP")
                 return
 
             assert (new_match.word_count == previous_match.word_count)
 
             if (new_match.entities[0].probability < previous_match.entities[0].probability):
                 #new term is of same length but less probable
-                print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
+                # print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
                 return
             else:
                 #remove old match
                 search_query.search_matches.remove(previous_match)
 
     search_query.add_match(new_match)
-    print("    ", new_match)
+    # print("    ", new_match)
 
 
 def search_entities(search_query, db_conn):
@@ -100,15 +100,15 @@ def search_entities(search_query, db_conn):
     c = db_conn.cursor()
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
         pos = -1  # position of the words in the string
-        print("-" * 80, "\n @range ", i)
+        # print("-" * 80, "\n @range ", i)
         for query_term in window(search_query.array, n=i):
             pos += 1  #windows is moved to the right
-            print("    LF TERM:", query_term)
+            # print("    LF TERM:", query_term)
             try:
                 c.execute("select * from entity_mapping where words = ?", (query_term,))
                 res = c.fetchone()
                 if not res:
-                    print("    NOT FOUND")
+                    # print("    NOT FOUND")
                     continue
                 # temp_result = entity_dict[query_term]
 
@@ -125,8 +125,7 @@ def search_entities(search_query, db_conn):
 
                 # temp_dict[query_term] = matches
             except KeyError:
-                print("KEY ERROR")
-                #pass
-
+                # print("KEY ERROR")
+                pass
 
     

@@ -62,11 +62,13 @@ def similarity_score_batch(target_entity, entities):
         except KeyError:
             error_count += 1
             scores.append(None)
+    # if error_count > 0:
     # print(error_count, " erros in syntax of API request - ", request.url)
     return scores
 
 
 if __name__ == '__main__':
-    print(similarity_score("ETH_Zurich", "University_of_Zurich"))
+    print(similarity_score("Carlyle,_Illinois", "Dam_(disambiguation)"))
     print(similarity_score("Justin_Bieber", "Metallica"))
     print(similarity_score("Zurich", "Coca-Cola"))
+    print(similarity_score("Broadcasting", "Anchor_&_Braille"))
