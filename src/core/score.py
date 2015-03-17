@@ -31,6 +31,11 @@ def F1_score(parser):
     for query in parser.query_array:
         set_entities_matched = []
         for match in query.search_matches:
+            if match.chosen_entity == -1:
+                # disregard all matches where no entity chosen
+                print("this entity wasnt chosen")
+                continue
+
             is_matched = False
 
             #print("\n", "/"*30, "\n")

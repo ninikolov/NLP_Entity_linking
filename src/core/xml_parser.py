@@ -28,7 +28,7 @@ class QueryParser():
         """
         self.soup = parse_xml(file_path)
         self.query_array = []
-        self.__build_queries()
+        self._build_queries()
 
     def get_all_queries_text(self):
         """
@@ -36,7 +36,7 @@ class QueryParser():
         """
         return [a.__repr__() for a in self.query_array]
 
-    def __build_queries(self):
+    def _build_queries(self):
         """Populate our array of SearchQuery items.
         TODO: Add actual position and length of query of term in query
         Both Currently 0 by default
@@ -50,17 +50,20 @@ class QueryParser():
                     e = Entity(ann.find_all("target")[0].text, 0)
                 except IndexError: # No true_entitiesntity here
                     e = Entity("None", 0)
+                try:
+                    span = ann.find_all("span")[0].text
+                    # find the amount of word separators in the string before the occurence of span
+                    str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string, re.IGNORECASE)
+                    pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                    assert(isinstance(pos, int))
 
-                span = ann.find_all("span")[0].text
-
-                #find the amount of word separators in the string before the occurence of span
-                str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string)
-                pos = len(re.findall(r"[\W]+", str_before.group(1)))
-                assert(isinstance(pos, int))
-
-                new_query.true_entities.append(SearchMatch(pos, len(span.split()), [e], span))
+                    new_query.true_entities.append(SearchMatch(pos, len(span.split()), [e], span))
+                except:
+                    print("Couldn't add \"%s\", there was some issue" % text)
+                    new_query = None
                 #print("LINK: " + e.link)
-            self.query_array.append(new_query)
+            if new_query:
+                self.query_array.append(new_query)
 
 
 def load_dict(file_path):

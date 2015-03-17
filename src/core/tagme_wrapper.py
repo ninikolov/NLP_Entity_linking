@@ -6,9 +6,9 @@ BASE_URL_SCORE = "http://tagme.di.unipi.it/rel?key=tagme-NLP-ETH-2015&lang=en&tt
 url = "http://tagme.di.unipi.it/rel"
 
 import json
-
 import requests
 
+from core.query import Entity
 
 def similarity_score(entity1, entity2):
     """
@@ -44,8 +44,10 @@ def similarity_score_batch(target_entity, entities):
     :return:
     """
     assert isinstance(entities, list)
+    if isinstance(target_entity, Entity):
+        target_entity = target_entity.link
     scores = []
-    params = {'key': 'tagme-NLP-ETH-2015', 'lang': 'en', 'tt': [target_entity + " " + e for e in entities]}
+    params = {'key': 'tagme-NLP-ETH-2015', 'lang': 'en', 'tt': [target_entity + " " + e.link for e in entities]}
     request = requests.get(url, params=params)
     try:
         data = json.loads(request.text)

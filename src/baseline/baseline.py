@@ -13,9 +13,10 @@ import marshal
 import os.path
 import sys
 
+
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 from core.query import Entity, SearchMatch
-
+from core.tagme_wrapper import similarity_score_batch
 # This only finds out the absolute path and directory of the file
 # to access the data directory
 this_file = os.path.realpath(__file__)
@@ -80,8 +81,9 @@ def add_new_term_check_overlap(new_match, search_query):
                 return
             else:
                 #remove old match
-                search_query.search_matches.remove(previous_match)
+                previous_match.chosen_entity = -1
 
+    new_match.chosen_entity = 0
     search_query.add_match(new_match)
     # print("    ", new_match)
 
@@ -123,9 +125,14 @@ def search_entities(search_query, db_conn):
                 # for d in marshal.loads(res[1]):     
                 #     print(d, "\n") 
 
-                # temp_dict[query_term] = matches
             except KeyError:
                 # print("KEY ERROR")
                 pass
+        for m1 in search_query.search_matches:
+            for m2 in search_query.search_matches:
+                if m1 is m2:
+                    continue
 
-    
+                for e1 in m1.entities:
+                    a = similarity_score_batch(e1.link, m2.entities)
+                    print(a)

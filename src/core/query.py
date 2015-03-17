@@ -55,6 +55,8 @@ class SearchMatch(object):
         self.position = position
         self.word_count = word_count
         self.entities = entities
+        self.chosen_entity = -1 # a positive number indicates array index 
+                                # of chosen entity, -1 == no entity chosen
         self.rating = "" # "true positive", "false positive", "false negative"
 
     def __repr__(self):
