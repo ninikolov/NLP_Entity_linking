@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from .query import TermColor
+from core.query import TermColor
+
 def get_entity_name(url):
     """
     :param url str:
@@ -64,8 +65,8 @@ def F1_score(parser):
                 fn += 1
                 true_match.rating = "FN"
 
-    #compute precision, recall and f1
-    #in the strict, the TP-lazy are counted as false positives !
+    # compute precision, recall and f1
+    # in the strict, the TP-lazy are counted as false positives !
     precision_s = float(tp_s) / (tp_s + tp_l + fp) 
     recall_s = float(tp_s) / (tp_s + fn)
     f1_s = 2 * float(precision_s * recall_s) / ( precision_s + recall_s)
@@ -78,8 +79,8 @@ def F1_score(parser):
 
     print("*"*60)
     print("{0:<15} | {1:12} | {2:12} | {3:12}".format("SCORE", "precision", "recall", "F1"))
-    print("-"*60,"\n{0:<15} | {1:12} | {2:12} | {3:12}".format("LAZY",
-     round(precision_l, 4),  round(recall_l, 4), TermColor.BLUE, round(f1_l, 4)), TermColor.END)
+    print("-"*60,"\n{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("LAZY",
+     round(precision_l, 4),  round(recall_l, 4), TermColor.BLUE, round(f1_l, 4),  TermColor.END))
     print("{0:<15} | {1:12} | {2:12} | {3:12}".format("STRICT",
      round(precision_s, 4), round(recall_s, 4), round(f1_s, 4)))   
     print("*"*60)
