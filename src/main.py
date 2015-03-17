@@ -5,7 +5,7 @@ import argparse
 
 from baseline import baseline
 from core.xml_parser import QueryParser, load_dict
-from core.score import lazy_F1
+from core.score import F1_score
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
 		    default="query-data-short-set.xml")
@@ -30,7 +30,7 @@ def main():
         q.visualize()
 	
 	#evaluate baseline solution
-    lazy_F1(parser)
+    F1_score(parser)
 	
 
 if __name__ == "__main__":

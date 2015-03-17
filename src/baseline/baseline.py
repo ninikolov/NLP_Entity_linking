@@ -13,11 +13,6 @@ import marshal
 import os.path
 import sys
 
-<<<<<<< HEAD
-from core.query import SearchMatch, Entity
-=======
->>>>>>> ffa0084943dbb8c07ab1acfb2731ae4b28cb2cb5
-
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 from core.query import Entity, SearchMatch
 

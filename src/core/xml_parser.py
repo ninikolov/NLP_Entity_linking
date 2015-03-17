@@ -54,15 +54,8 @@ class QueryParser():
                 span = ann.find_all("span")[0].text
 
                 #find the amount of word separators in the string before the occurence of span
-                str_before = re.match(r"([.]*)%s" % span, new_query.search_string)
-                print(new_query.search_string)
-                print(span)
-                if str_before == None:
-                    pos = 0
-                    print("pos = 0!")
-                else:
-                    pos = len(re.findall(r"[\W]", str_before.group(0)))
-                    print(str_before.group(0), " pos found:", pos, "\n")
+                str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string)
+                pos = len(re.findall(r"[\W]+", str_before.group(1)))
                 assert(isinstance(pos, int))
 
                 new_query.true_entities.append(SearchMatch(pos, len(span.split()), [e], span))

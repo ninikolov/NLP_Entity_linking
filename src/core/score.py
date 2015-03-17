@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from .query import TermColor
 def get_entity_name(url):
     """
     :param url str:
@@ -13,26 +14,21 @@ def get_entity_name(url):
         entity_name = url[char_pos] + entity_name
 
 
-def strict_F1(query_dict, entities_xml):
-    pass
-
-
-def lazy_F1(parser):
+def F1_score(parser):
     """
     :param parser:
     :return:
     """
 
     # count number true positive, flase positives and false negatives
-    tp_strict = 0
-    tp_lazy = 0
+    tp_s = 0
+    tp_l = 0
     tp = 0  
     fp = 0
     fn = 0
 
     for query in parser.query_array:
         set_entities_matched = []
-        print("\n", query.search_string)
         for match in query.search_matches:
             is_matched = False
 
@@ -45,17 +41,17 @@ def lazy_F1(parser):
                 if (match.entities[0].link == get_entity_name(true_match.entities[0].link)):
                     assert(not is_matched) #There should not be 2 identical true_entities
                     is_matched = True
-
                     
-                    print("MATCH pos ", match.position, "-> ", match)
-                    print("TRUTH pos ", true_match.position, "-> ", true_match.substring)
-
-                    tp += 1
-                    match.rating = "TP-Strict"
-                    true_match.rating = "TP-Strict"
+                    if (match.substring == true_match.substring):
+                        match.rating = true_match.rating = "TP-strict"
+                        tp_s += 1
+                    else:
+                        match.rating = true_match.rating = "TP-lazy"
+                        tp_l += 1
 
             if (not is_matched):
                 #FP
+                match.rating = "FP"
                 fp += 1
         for true_match in query.true_entities:
             is_matched = False
@@ -66,11 +62,26 @@ def lazy_F1(parser):
             if ( not is_matched):
                 #FN
                 fn += 1
-    #compute precision, recall and f1   
-    precision = float(tp) / (tp + fp)
-    recall = float(tp) / (tp + fn)
-    f1 = 2 * float(precision * recall) / ( precision + recall)
-    print("precision is: " + str(precision), "\n")
-    print("recall is: " + str(recall), "\n")
-    print("F1 is: " + str(f1), "\n")
+                true_match.rating = "FN"
+
+    #compute precision, recall and f1
+    #in the strict, the TP-lazy are counted as false positives !
+    precision_s = float(tp_s) / (tp_s + tp_l + fp) 
+    recall_s = float(tp_s) / (tp_s + fn)
+    f1_s = 2 * float(precision_s * recall_s) / ( precision_s + recall_s)
+
+    precision_l = float(tp_s + tp_l) / (tp_s + tp_l+ fp)
+    recall_l = float(tp_s + tp_l) / (tp_s + tp_l + fn)
+    f1_l = 2 * float(precision_l * recall_l) / ( precision_l + recall_l)
+
+    assert(precision_s <= precision_l)
+
+    print("*"*60)
+    print("{0:<15} | {1:12} | {2:12} | {3:12}".format("SCORE", "precision", "recall", "F1"))
+    print("-"*60,"\n{0:<15} | {1:12} | {2:12} | {3:12}".format("LAZY",
+     round(precision_l, 4),  round(recall_l, 4), TermColor.BLUE, round(f1_l, 4)), TermColor.END)
+    print("{0:<15} | {1:12} | {2:12} | {3:12}".format("STRICT",
+     round(precision_s, 4), round(recall_s, 4), round(f1_s, 4)))   
+    print("*"*60)
+
     
