@@ -133,6 +133,6 @@ def search_entities(search_query, db_conn):
                 if m1 is m2:
                     continue
 
-                for e1 in m1.entities:
-                    a = similarity_score_batch(e1.link, m2.entities)
-                    print(a)
+                #for e1 in m1.entities:
+                    #a = similarity_score_batch(e1.link, m2.entities)
+                    #print(a)

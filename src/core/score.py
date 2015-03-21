@@ -33,29 +33,33 @@ def F1_score(parser):
         for match in query.search_matches:
             if match.chosen_entity == -1:
                 # disregard all matches where no entity chosen
-                print("this entity wasnt chosen")
+                #print("this entity wasnt chosen")
                 continue
 
             is_matched = False
 
             #print("\n", "/"*30, "\n")
-            #print("\n 1: match_found: ",match.entity.link)
+            #print("\n 1: match_found: ",match.entities[0].link)
 
             for true_match in query.true_entities:
+
                 #TP
-                #print("\n 2: true_match: ",get_entity_name(true_match.entity[0].link))
+                #print("2: true_match: ",get_entity_name(true_match.entities[0].link))
                 if (match.entities[0].link == get_entity_name(true_match.entities[0].link)):
-                    assert(not is_matched) #There should not be 2 identical true_entities
+                    #assert(not is_matched) #There should not be 2 identical true_entities
                     is_matched = True
                     
                     if (match.substring == true_match.substring):
                         match.rating = true_match.rating = "TP-strict"
                         tp_s += 1
+                        #print("2 strict")
                     else:
                         match.rating = true_match.rating = "TP-lazy"
                         tp_l += 1
+                        #print("2 lazy")
 
             if (not is_matched):
+                #print("2:No match! ")
                 #FP
                 match.rating = "FP"
                 fp += 1
@@ -63,12 +67,13 @@ def F1_score(parser):
             is_matched = False
             for match in query.search_matches:
                 if (match.entities[0].link == get_entity_name(true_match.entities[0].link)):
-                    assert(not is_matched) #There should not be 2 identical search_matches
+                    #assert(not is_matched) #There should not be 2 identical search_matches
                     is_matched = True
             if ( not is_matched):
                 #FN
                 fn += 1
                 true_match.rating = "FN"
+                #print("3:No match! ")
 
     # compute precision, recall and f1
     # in the strict, the TP-lazy are counted as false positives !
@@ -86,8 +91,8 @@ def F1_score(parser):
     print("{0:<15} | {1:12} | {2:12} | {3:12}".format("SCORE", "precision", "recall", "F1"))
     print("-"*60,"\n{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("LAZY",
      round(precision_l, 4),  round(recall_l, 4), TermColor.BLUE, round(f1_l, 4),  TermColor.END))
-    print("{0:<15} | {1:12} | {2:12} | {3:12}".format("STRICT",
-     round(precision_s, 4), round(recall_s, 4), round(f1_s, 4)))   
+    print("{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("STRICT",
+     round(precision_s, 4), round(recall_s, 4), TermColor.YELLOW, round(f1_s, 4),  TermColor.END))   
     print("*"*60)
 
     
