@@ -30,6 +30,9 @@ class SearchQuery(object):
         #return "<SearchQuery: %s>" % self.search_string
         return self.search_string
 
+    def get_chosen_entities(self):
+        return [m.entities[m.chosen_entity] for m in self.search_matches if m.chosen_entity >= 0]
+
     # def choose_best_entities(self):
     #     """
     #     TODO: Figure out a better way to do this
@@ -62,11 +65,23 @@ class SearchMatch(object):
     def __repr__(self):
         return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities[0])
 
-    def get_entities(self, limit=5):
-        if len(self.entities) <= limit:
-            return self.entities
+    def get_chosen_entity(self):
+        if self.chosen_entity >= 0:
+            return self.entities[self.chosen_entity]
         else:
-            return self.entities[:limit]
+            return None
+
+    def get_entities_limit(self, size_limit=5, prob_limit=None):
+        """
+        """
+        if prob_limit:
+            ents = [e for e in self.entities if e.probability >= prob_limit]
+        else:
+            ents = self.entities
+        if not size_limit or len(ents) <= size_limit:
+            return ents
+        else:
+            return ents[:size_limit]
 
     # def choose_best_match(self):
     #     """

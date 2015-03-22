@@ -16,7 +16,6 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 from core.query import Entity, SearchMatch
-from core.tagme_wrapper import similarity_score_batch
 # This only finds out the absolute path and directory of the file
 # to access the data directory
 this_file = os.path.realpath(__file__)
@@ -128,11 +127,13 @@ def search_entities(search_query, db_conn):
             except KeyError:
                 # print("KEY ERROR")
                 pass
-        for m1 in search_query.search_matches:
-            for m2 in search_query.search_matches:
-                if m1 is m2:
-                    continue
 
-                for e1 in m1.entities:
-                    a = similarity_score_batch(e1.link, m2.entities)
-                    print(a)
+                # for m1 in search_query.search_matches:
+                # for m2 in search_query.search_matches:
+                #         if m1 is m2:
+                #             continue
+                #
+                #         for e1 in m1.entities:
+                #             a = similarity_score_batch(e1, m2.entities)
+                #             print(a)
+
