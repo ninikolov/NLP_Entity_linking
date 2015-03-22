@@ -8,7 +8,7 @@ from core.xml_parser import QueryParser, load_dict
 from core.score import F1_score
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-		    default="query-data-short-set.xml")
+		    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
