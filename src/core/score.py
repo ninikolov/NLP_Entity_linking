@@ -2,7 +2,6 @@
 
 from core.query import TermColor
 
-
 def calc_tp_fp_fn(parser):
     """
     :param parser:
@@ -24,13 +23,13 @@ def calc_tp_fp_fn(parser):
             parser.total_matches += 1
             if match.chosen_entity == -1:
                 # disregard all matches where no entity chosen
-                #print("this entity wasnt chosen")
+                print("this entity wasnt chosen")
                 continue
 
             is_matched = False
 
-            #print("\n", "/"*30, "\n")
-            #print("\n 1: match_found: ",match.entities[0].link)
+            # print("\n", "/"*30, "\n")
+            # print("\n 1: match_found: ",match.entity.link)
 
             for true_match in query.true_entities:
 
@@ -50,11 +49,9 @@ def calc_tp_fp_fn(parser):
                         match.rating = true_match.rating = "TP-lazy"
                         parser.tp_l += 1
                         #print("2 lazy")
-
                     is_matched = True
 
             if (not is_matched):
-                #print("2:No match! ")
                 match.rating = "FP"
                 parser.fp += 1
         for true_match in query.true_entities:
@@ -66,7 +63,6 @@ def calc_tp_fp_fn(parser):
             if ( not is_matched):
                 parser.fn += 1
                 true_match.rating = "FN"
-                #print("3:No match! ")
 
 def print_F1(parser):
 
@@ -79,10 +75,10 @@ def print_F1(parser):
 
     precision_l = float(parser.tp_s + parser.tp_l) / (parser.tp_s + parser.tp_l+ parser.fp)
     recall_l = float(parser.tp_s + parser.tp_l) / (parser.tp_s + parser.tp_l + parser.fn)
+
     f1_l = 2 * float(precision_l * recall_l) / ( precision_l + recall_l)
 
-    assert(precision_s <= precision_l)
-
+    assert (precision_s <= precision_l)
     print("*"*60)
     print("{0}{1}{2}{3}{4}{5}".format(TermColor.BOLD, "Total queries :", len(parser.query_array), 
         "; Total matches :", parser.total_matches, TermColor.END))

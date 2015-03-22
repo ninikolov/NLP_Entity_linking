@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 
 from .query import SearchQuery, SearchMatch, Entity
 
+
 # XML Document documentation
 # session -> mult. query
 
@@ -77,8 +78,9 @@ class QueryParser():
                     str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
                     pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
                     assert(isinstance(pos, int))
-
-                    new_query.true_entities.append(SearchMatch(pos, len(span.split()), [e], span))
+                    new_match = SearchMatch(pos, len(span.split()), [e], span)
+                    new_match.chosen_entity = 0
+                    new_query.true_entities.append(new_match)
                 except:
                     print("Couldn't add \"%s\", there was some issue" % text)
                     new_query = None
