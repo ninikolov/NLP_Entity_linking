@@ -12,6 +12,18 @@ from .query import SearchQuery, SearchMatch, Entity
 # XML Document documentation
 # session -> mult. query
 
+def get_entity_name(url):
+    """
+    :param url str:
+    :return: entity_name
+    Entity_name is the last part of the wiki url( after last /)
+    """
+    entity_name = ""
+    for char_pos in range(len(url) - 1, 0, -1):
+        if ( url[char_pos] == "/"):
+            return entity_name
+        entity_name = url[char_pos] + entity_name
+
 def parse_xml(file_path):
     with open(file_path) as f:
         soup = BeautifulSoup(f, ["lxml", "xml"])
@@ -30,6 +42,13 @@ class QueryParser():
         self.query_array = []
         self._build_queries()
 
+        # true positive, flase positives and false negatives (calculated in score.py>calc_tp_fp_fn)
+        self.tp_s = self.tp_l = self.fp = self.fn = 0 
+
+        #amount of queries and matches checked (also calculated in score.py>calc_tp_fp_fn)
+        self.total_matches = 0
+        self.queries_with_some_identical_true_entities = 0
+
     def get_all_queries_text(self):
         """
         :return: An array with the text of the queries
@@ -47,13 +66,15 @@ class QueryParser():
             new_query = SearchQuery(text)
             for ann in query.find_all("annotation"):
                 try:
-                    e = Entity(ann.find_all("target")[0].text, 0)
+                    e = Entity(get_entity_name(ann.find_all("target")[0].text), 1)
                 except IndexError: # No true_entitiesntity here
-                    e = Entity("None", 0)
+                    #e = Entity("None", 0)
+                    continue
                 try:
-                    span = ann.find_all("span")[0].text
+                    span = ann.find_all("span")[0].text.replace('"', "")
                     # find the amount of word separators in the string before the occurence of span
-                    str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string, re.IGNORECASE)
+                    #print(new_query.search_string, "=>", span)
+                    str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
                     pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
                     assert(isinstance(pos, int))
 

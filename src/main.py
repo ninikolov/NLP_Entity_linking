@@ -5,10 +5,10 @@ import argparse
 
 from baseline import baseline
 from core.xml_parser import QueryParser, load_dict
-from core.score import F1_score
+from core.score import calc_tp_fp_fn, print_F1
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-		    default="query-data-dev-set.xml")
+		    default="query-data-short-set.xml")
 
 args = parser.parse_args()
 
@@ -26,11 +26,12 @@ def main():
     for q in parser.query_array:
         entities = baseline.search_entities(q, db_conn)
 
+    calc_tp_fp_fn(parser)
+
     for q in parser.query_array:
         q.visualize()
 	
-	#evaluate baseline solution
-    F1_score(parser)
+    print_F1(parser)
 	
 
 if __name__ == "__main__":

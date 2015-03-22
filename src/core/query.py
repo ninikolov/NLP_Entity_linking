@@ -44,9 +44,63 @@ class SearchQuery(object):
         return self.search_string
 
     def visualize(self):
-        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, self.search_string, TermColor.END, ""))
+
+        colors = {'TP-strict': TermColor.GREEN, 'TP-lazy': TermColor.YELLOW, 
+            'FP': TermColor.RED,'FN': TermColor.RED, "": TermColor.CYAN}
+
+        #The query is normally visualised once. But if some matches are overlapping, we will need to show
+        #the string more than once so that all the matches can be seen.
+        visu = [] #search string visalization
+        index_ssv = 0 #index search string vizualization
+        
+        search_matches_copy = list(self.search_matches) 
+
+        while len(search_matches_copy)>0:
+            word_pointer = 0
+            visu.append("")
+            while word_pointer < len(self.array):
+                #in this loop we go through the words in the query array and look if there are corresponding matches
+                match_exists = False
+                for match in search_matches_copy:
+                    if (not match.rating):
+                        search_matches_copy.remove(match)
+                        break #This should normally not happen. However it seems that it happens in the case where
+                        #the xml is incomplete (check dev-set "New York American Girl dolls cost"). TODO : Look into that.
+                    if match.position == word_pointer:
+                        #we check the starting position of the match.
+                        #followed by an assert : check if the words (not ony position) coincide 
+                        assert(match.substring.split()[0] == self.array[word_pointer])
+                        visu[index_ssv] +=  "{0}{1}{2} ".format(
+                            colors[match.rating], match.substring, TermColor.END)
+                        word_pointer += match.word_count
+                        if (word_pointer < len(self.array)):
+                            visu[index_ssv] += "| " #Separate the matches
+                        match_exists = True
+                        search_matches_copy.remove(match)
+                        break
+                if (not match_exists):
+                    #this word corresponds to no match, so we write it in white
+                    visu[index_ssv] += self.array[word_pointer] + " "
+                    word_pointer += 1
+            #now, some (overlapping) matches may have been overlooked. in this case the search_matches_copy will
+            #not be empty here so it will go through the while loop again. 
+            index_ssv += 1
+
+        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, 
+            self.search_string, TermColor.END, ""))
+        print (" |&| ".join(visu))
         for match in self.search_matches:
-            print("{0:<25} | {1}".format(match.substring, match.entities[0]))
+            print("{0}{1:<25} | {2}{3}".format(colors[match.rating],
+                match.substring, match.entities[0], TermColor.END))
+        
+        first=True
+        for true_match in self.true_entities:
+            if (true_match.rating == "FN"):
+                if (first):
+                    print("Fale negatives (missed entities):")
+                first = False
+                print("{0}{1:<25} | {2}{3}".format(colors[true_match.rating],
+                    true_match.substring, true_match.entities[0], TermColor.END))
         print("-"*80 + "\n")
 
 class SearchMatch(object):
