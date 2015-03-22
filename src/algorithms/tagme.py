@@ -15,7 +15,7 @@ from src.core.tagme_wrapper import *
 from src.core.xml_parser import load_dict, QueryParser
 
 from src.baseline.baseline import search_entities
-from src.core.score import F1_score_tagme
+from src.core.score import calc_tp_fp_fn
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
@@ -127,4 +127,4 @@ if __name__ == '__main__':
 
 
     # evaluate solution
-    F1_score_tagme(parser)
+    calc_tp_fp_fn(parser, True)
