@@ -144,6 +144,7 @@ class SearchMatch(object):
 
     def clean(self):
         self.entities = [self.entities[self.chosen_entity]]
+        self.chosen_entity = 0 if self.chosen_entity > -1 else -1
 
     # def choose_best_match(self):
     #     """
