@@ -33,6 +33,11 @@ class SearchQuery(object):
     def get_chosen_entities(self):
         return [m.entities[m.chosen_entity] for m in self.search_matches if m.chosen_entity >= 0]
 
+    def clean(self):
+        for match in self.search_matches:
+            match.clean()
+
+
     # def choose_best_entities(self):
     #     """
     #     TODO: Figure out a better way to do this
@@ -136,6 +141,9 @@ class SearchMatch(object):
             return ents
         else:
             return ents[:size_limit]
+
+    def clean(self):
+        self.entities = [self.entities[self.chosen_entity]]
 
     # def choose_best_match(self):
     #     """

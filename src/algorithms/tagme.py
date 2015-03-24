@@ -11,11 +11,11 @@ import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
-from src.core.tagme_wrapper import *
-from src.core.xml_parser import load_dict, QueryParser
+from core.tagme_wrapper import *
+from core.xml_parser import load_dict, QueryParser
 
-from src.baseline.baseline import search_entities
-from src.core.score import calc_tp_fp_fn
+from baseline.baseline import search_entities
+from core.score import calc_tp_fp_fn
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",

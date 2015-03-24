@@ -25,11 +25,13 @@ def main():
     
     for q in parser.query_array:
         entities = baseline.search_entities(q, db_conn)
+        q.visualize()
+        q.clean()
 
     calc_tp_fp_fn(parser)
 
-    for q in parser.query_array:
-        q.visualize()
+    # for q in parser.query_array:
+    #     q.visualize()
 	
     print_F1(parser)
 	
