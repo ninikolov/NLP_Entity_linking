@@ -53,8 +53,8 @@ class SearchQuery(object):
 
     def visualize(self):
 
-        colors = {'TP-strict': TermColor.GREEN, 'TP-lazy': TermColor.YELLOW, 
-            'FP': TermColor.RED,'FN': TermColor.RED, "": TermColor.CYAN}
+        colors = {'TP-strict': TermColor.GREEN, 'TP-relaxed': TermColor.YELLOW, 'FP': TermColor.RED,
+        'FP-Corresponding_true_entity':TermColor.RED, 'FN': TermColor.BLUE, "": TermColor.CYAN}
 
         #The query is normally visualised once. But if some matches are overlapping, we will need to show
         #the string more than once so that all the matches can be seen.
@@ -103,9 +103,9 @@ class SearchQuery(object):
         
         first=True
         for true_match in self.true_entities:
-            if (true_match.rating == "FN"):
+            if (not true_match.rating in ("TP-strict", "TP-relaxed")):
                 if (first):
-                    print("Fale negatives (missed entities):")
+                    print("Missed entities:")
                 first = False
                 print("{0}{1:<25} | {2}{3}".format(colors[true_match.rating],
                     true_match.substring, true_match.entities[0], TermColor.END))
@@ -119,7 +119,7 @@ class SearchMatch(object):
         self.entities = entities
         self.chosen_entity = -1 # a positive number indicates array index 
                                 # of chosen entity, -1 == no entity chosen
-        self.rating = "" # "TP-strict", "TP-lazy", "FP", "FN"
+        self.rating = "" # "TP-strict", "TP-relaxed", "FP", "FN"
 
     def __repr__(self):
         return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities[0])
