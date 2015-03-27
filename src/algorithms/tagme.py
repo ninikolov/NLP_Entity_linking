@@ -15,11 +15,11 @@ from core.tagme_wrapper import *
 from core.xml_parser import load_dict, QueryParser
 
 from baseline.baseline import search_entities
-from core.score import calc_tp_fp_fn
+from core.score import evaluate_score, print_F1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-dev-set.xml")
+                    default="query-data-train-set.xml")
 
 args = parser.parse_args()
 
@@ -36,7 +36,7 @@ PROB_LIMIT = 0.01
 THETA = 0.1
 
 
-def vote(target_entity, other_entities):
+def match_vote(target_entity, other_entities):
     """
     Each entity from other_entities votes for target_entity. A normalized score is computed.
     :param target_entity:
@@ -44,38 +44,49 @@ def vote(target_entity, other_entities):
     :return:
     """
     scores = similarity_score_batch(target_entity, other_entities)
-    new_length = len([x for x in scores if x and x != 0.0])
-    if not scores or new_length == 0:  # if no scores were found
+    assert len(scores) == len(other_entities)
+    new_length = 0
+    if not scores:  # if no scores were found
         return 0.
     vote_result = 0.
-    for i in range(len(other_entities)):
-        if scores[i] and scores[i] != 0.:  # If we found score in DB
+    for i in range(len(scores)):
+        if scores[i] is not None:  # If we found score in DB
             vote_result += other_entities[i].probability * scores[i]
-    return vote_result / new_length  # normalize
+            new_length += 1
+    if new_length == 0:
+        return 0.
+    vote_result = vote_result / new_length  # normalize
+    assert vote_result <= 1.
+    return vote_result
 
 
-def choose_entity(match1, other_matches, match_index, limit=ENTITIES_LIMIT):
+def choose_entity(target_match, matches, match_index, limit=ENTITIES_LIMIT):
     """
     Choose the entity in match1, which maximises the voting function.
-    :param match1:
-    :param other_matches:
+    :param target_match:
+    :param matches:
     :param limit:
     :return:
     """
-    match_votes = []
-    for entity in match1.get_entities_limit(size_limit=limit, prob_limit=PROB_LIMIT):
-        v = 0.
-        for i in range(len(other_matches)):
+    entity_votes = []
+    other_entitites = target_match.get_entities_limit(size_limit=limit, prob_limit=PROB_LIMIT)
+    for entity in other_entitites:
+        entity_vote = 0.
+        for i in range(len(matches)):
             if match_index == i:  # looking at same match
                 continue
-            v += vote(entity, other_matches[i].get_entities_limit(size_limit=limit, prob_limit=PROB_LIMIT))
-        match_votes.append(v)
-    try:
-        winner_entity = np.argmax(np.array(match_votes))
-        print("Tagme chooses entity ", match1.entities[winner_entity], "for match ", match1.substring)
-        match1.chosen_entity = winner_entity
-    except ValueError:
-        pass
+            new_vote = match_vote(entity, matches[i].get_entities_limit(size_limit=limit, prob_limit=PROB_LIMIT))
+            # print("Vote ", new_vote, "for entity", entity.link, "match", matches[i].substring)
+            entity_vote += new_vote
+        entity_votes.append(entity_vote)
+    # print("all votes: ", entity_votes)
+    if not entity_votes:
+        print("Tagme didn't find anything for ", target_match.substring)
+        return
+    winner_entity = np.argmax(entity_votes)
+    print("Tagme chooses entity ", target_match.entities[winner_entity], "for match ", target_match.substring,
+          "with vote", entity_votes[winner_entity])
+    target_match.chosen_entity = winner_entity
 
 
 def check_coherence(entity_index, other_entities, theta=THETA):
@@ -90,9 +101,9 @@ def check_coherence(entity_index, other_entities, theta=THETA):
         return True
     other = list(other_entities)
     del other[entity_index]
-    coh = vote(other_entities[entity_index], other) / (len(other_entities) - 1)
+    coh = match_vote(other_entities[entity_index], other) / (len(other_entities) - 1)
     coh += other_entities[entity_index].probability / 2
-    print(coh)
+    # print(coh)
     return coh > theta
 
 
@@ -123,8 +134,9 @@ if __name__ == '__main__':
             choose_entity(query.search_matches[index], query.search_matches, index)
         final = prune(query)
         print("Final entities after pruning: ", final)
+        evaluate_score(query, parser, use_chosen_entity=True)
         query.visualize()
 
 
     # evaluate solution
-    calc_tp_fp_fn(parser, True)
+    print_F1(parser)

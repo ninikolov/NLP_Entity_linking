@@ -11,6 +11,7 @@ import sys
 
 import requests
 
+
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.query import Entity
@@ -72,12 +73,12 @@ def similarity_score_batch(target_entity, entities):
             error_count += 1
             scores.append(None)
     # if error_count > 0:
-    # print(error_count, " erros in syntax of API request - ", request.url)
+    #    print(error_count, " erros in syntax of API request - ", request.url)
     return scores
 
 
 if __name__ == '__main__':
     print(similarity_score(Entity("Carlyle,_Illinois", 0.), Entity("Dam_(disambiguation)", 0.)))
+    print(similarity_score(Entity("Broadcasting", 0.), Entity("Anchor_&_Braille", 0.)))
     print(similarity_score("Justin_Bieber", "Metallica"))
     print(similarity_score("Zurich", "Coca-Cola"))
-    print(similarity_score("Broadcasting", "Anchor_&_Braille"))
