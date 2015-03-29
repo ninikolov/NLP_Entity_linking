@@ -15,7 +15,7 @@ def evaluate_score(query, parser, use_chosen_entity=False):
         parser.total_matches += 1
         if match.chosen_entity == -1:
             # disregard all matches where no entity chosen
-            print("No entity was chosen for : %r" % (match))
+            # print("No entity was chosen for : %r" % (match))
             continue
 
         is_matched = False

@@ -15,6 +15,9 @@ import requests
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.query import Entity
+import requests_cache
+
+requests_cache.install_cache('../../data/tagme-cache')
 
 def similarity_score(entity1, entity2):
     """

@@ -19,7 +19,7 @@ from core.score import evaluate_score, print_F1
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-train-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
@@ -81,7 +81,7 @@ def choose_entity(target_match, matches, match_index, limit=ENTITIES_LIMIT):
         entity_votes.append(entity_vote)
     # print("all votes: ", entity_votes)
     if not entity_votes:
-        print("Tagme didn't find anything for ", target_match.substring)
+        # print("Tagme didn't find anything for ", target_match.substring)
         return
     winner_entity = np.argmax(entity_votes)
     print("Tagme chooses entity ", target_match.entities[winner_entity], "for match ", target_match.substring,

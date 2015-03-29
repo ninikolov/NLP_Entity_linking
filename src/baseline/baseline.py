@@ -95,7 +95,7 @@ def search_entities(search_query, db_conn):
     """
     # search_query = SearchQuery(search_string)
     #print(search_query, "\n", search_query.true_entities, "\n \n" ) 
-    print("entity_search", search_query.search_string)
+    # print("entity_search", search_query.search_string)
 
     c = db_conn.cursor()
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
