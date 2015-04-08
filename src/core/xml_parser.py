@@ -7,7 +7,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-from .query import SearchQuery, SearchMatch, Entity
+from .query import SearchQuery, SearchMatch, Entity, SearchSession
 
 
 # XML Document documentation
@@ -62,32 +62,35 @@ class QueryParser():
         Both Currently 0 by default
         """
         self.query_array = []
-        for query in self.soup.find_all("query"):
-            text = query.find_all("text")[0].text
-            new_query = SearchQuery(text)
-            for ann in query.find_all("annotation"):
-                try:
-                    e = Entity(get_entity_name(ann.find_all("target")[0].text), 1)
-                except IndexError: # No true_entitiesntity here
-                    #e = Entity("None", 0)
-                    continue
-                try:
-                    span = ann.find_all("span")[0].text.replace('"', "")
-                    # find the amount of word separators in the string before the occurence of span
-                    #print(new_query.search_string, "=>", span)
-                    str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
-                    pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
-                    assert(isinstance(pos, int))
-                    new_match = SearchMatch(pos, len(span.split()), [e], span)
-                    new_match.chosen_entity = 0
-                    new_query.true_entities.append(new_match)
-                except:
-                    print("Couldn't add \"%s\", there was some issue" % text)
-                    new_query = None
-                #print("LINK: " + e.link)
-            if new_query:
-                self.query_array.append(new_query)
-
+        for session in self.soup.find_all("session"):
+            session_id = session["id"]
+            search_session = SearchSession(session_id)
+            for query in session.find_all("query"):
+                text = query.find_all("text")[0].text
+                new_query = SearchQuery(text, search_session)
+                search_session.append(new_query)
+                for ann in query.find_all("annotation"):
+                    try:
+                        e = Entity(get_entity_name(ann.find_all("target")[0].text), 1)
+                    except IndexError: # No true_entitiesntity here
+                        #e = Entity("None", 0)
+                        continue
+                    try:
+                        span = ann.find_all("span")[0].text.replace('"', "")
+                        # find the amount of word separators in the string before the occurence of span
+                        #print(new_query.search_string, "=>", span)
+                        str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
+                        pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                        assert(isinstance(pos, int))
+                        new_match = SearchMatch(pos, len(span.split()), [e], span)
+                        new_match.chosen_entity = 0
+                        new_query.true_entities.append(new_match)
+                    except:
+                        print("Couldn't add \"%s\", there was some issue" % text)
+                        new_query = None
+                    #print("LINK: " + e.link)
+                if new_query:
+                    self.query_array.append(new_query)
 
 def load_dict(file_path):
     """

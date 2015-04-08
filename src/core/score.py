@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from core.query import TermColor
+from core.helper import TermColor
 
 
 def evaluate_score(query, parser, use_chosen_entity=False):
