@@ -1,23 +1,34 @@
 # -*- coding: utf-8 -*-
-class TermColor:
-   PURPLE = '\033[95m'
-   CYAN = '\033[96m'
-   DARKCYAN = '\033[36m'
-   BLUE = '\033[94m'
-   GREEN = '\033[92m'
-   YELLOW = '\033[93m'
-   RED = '\033[91m'
-   BOLD = '\033[1m'
-   UNDERLINE = '\033[4m'
-   END = '\033[0m'
-
+from core.helper import TermColor
 import re
+# "TP-strict", "TP-relaxed", "FP", "FN"
+EXPORT_COLORS = {
+    "FN": "blue",
+    "FP": "red",
+    "TP-relaxed": "yellow",
+    "TP-strict": "green"
+}
+
+
+class SearchSession(list):
+    # store session id and otherwise behave like a list
+    # that contains all the search queries belonging to a
+    # specific session
+    def __init__(self, id_):
+        self.session_id = id_
+
+    def __repr__(self):
+        return str("<SearchSession: " + self.session_id + ": "
+                    + super().__repr__() + ">")
+
+
 class SearchQuery(object):
-    def __init__(self, search_string):
+    def __init__(self, search_string, session):
         self.search_string = search_string
         self.array = re.findall(r"[\w]+", search_string)
         self.search_matches = []
         self.true_entities = []
+        self.session = session
 
     def add_match(self, match):
         # match: SearchMatch
@@ -112,6 +123,47 @@ class SearchQuery(object):
                     true_match.substring, true_match.entities[0], TermColor.END))
         print("All true entities:", self.true_entities)
         print("-"*80 + "\n")
+
+    def add_to_export(self, exporter):
+        from collections import OrderedDict
+
+        search = OrderedDict()
+        for a in self.array:
+            search[a] = {}
+
+        exporter.append_row(OrderedDict())
+        exporter.append_row(search)
+
+        res = OrderedDict()
+
+        m = list(self.search_matches)
+        m.sort(key=lambda s: s.position)
+
+        for a in m:
+            ent = a.get_chosen_entity()
+            if ent:
+                res[ent.link] = {
+                    "link": "http://en.wikipedia.org/wiki/" + ent.link,
+                    "span": a.word_count,
+                    "bg": EXPORT_COLORS[a.rating]
+                }
+
+        exporter.append_row(res)
+        true_res = OrderedDict()
+        m = list(self.true_entities)
+        m.sort(key=lambda s: s.position)
+        for t in m:
+            print("True Ent: ", t)
+            ent = t.get_chosen_entity()
+            print(ent.link, t.word_count, t.position)
+            if ent:
+                true_res[ent.link] = {
+                    "link": "http://en.wikipedia.org/wiki/" + ent.link,
+                    "span": t.word_count
+                }
+
+        exporter.append_row(true_res)
+
 
 class SearchMatch(object):
     def __init__(self, position, word_count, entities, substring):
