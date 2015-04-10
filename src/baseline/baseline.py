@@ -44,7 +44,7 @@ def window(seq, n=3):
         yield " ".join(result)
 
 
-def add_new_term_check_overlap(new_match, search_query):
+def check_overlap(new_match, search_query):
     """
     Checks if the new search term is overlapping with 
     previous search terms in the query, based on their 
@@ -70,24 +70,21 @@ def add_new_term_check_overlap(new_match, search_query):
             if (new_match.word_count < previous_match.word_count):
                 #new term is shorter
                 # print("         *** SHORTER >> SKIP")
-                return
+                return True
 
             assert (new_match.word_count == previous_match.word_count)
 
             if (new_match.entities[0].probability < previous_match.entities[0].probability):
                 #new term is of same length but less probable
                 # print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
-                return
+                return True
             else:
                 #remove old match
                 previous_match.chosen_entity = -1
-
-    new_match.chosen_entity = 0
-    search_query.add_match(new_match)
-    # print("    ", new_match)
+    return False
 
 
-def search_entities(search_query, db_conn):
+def search_entities(search_query, db_conn, take_largest=True):
     """
     :param search_string:
     :param db_conn:
@@ -100,39 +97,86 @@ def search_entities(search_query, db_conn):
     c = db_conn.cursor()
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
         pos = -1  # position of the words in the string
-        # print("-" * 80, "\n @range ", i)
         for query_term in window(search_query.array, n=i):
-            pos += 1  #windows is moved to the right
-            # print("    LF TERM:", query_term)
-            try:
-                c.execute("select * from entity_mapping where words = ?", (query_term,))
-                res = c.fetchone()
-                if not res:
-                    # print("    NOT FOUND")
+            pos += 1  # windows is moved to the right
+            c.execute("select * from entity_mapping where words = ?", (query_term,))
+            res = c.fetchone()
+            if not res:  # No entity found for string
+                continue
+            entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
+            # Create a match with all entities found
+            new_match = SearchMatch(pos, i, entities, query_term)
+            if take_largest:
+                if check_overlap(new_match, search_query):
                     continue
-                # temp_result = entity_dict[query_term]
+            new_match.chosen_entity = 0
+            search_query.add_match(new_match)
 
+
+import itertools
+
+
+def apply_f_n_combinations(text, f_n, out=[]):
+    """
+
+    :param text:
+    :param f_n:
+    :return:
+    """
+    l = text.split()
+    l_size = len(l)
+    if l_size == 1:
+        new = f_n(text)
+        if not new in out:
+            return out + [new]
+        return out
+    for i in range(l_size, 0, -1):  # Try combinations
+        to_pluralize = itertools.combinations(range(l_size), i)
+        for inices in to_pluralize:
+            l = text.split()
+            for ind in inices:
+                # print(ind)
+                l[ind] = f_n(l[ind])
+            final = " ".join(l)
+            if not final in out:
+                out.append(" ".join(l))
+    return out
+
+
+def get_synonym_combinations(text):
+    pass
+
+
+def search_entities_v2(search_query, db_conn, take_largest=True):
+    """
+    Just to have a second version to build upon the baseline
+    :param search_string:
+    :param db_conn:
+    :return:
+    """
+    # search_query = SearchQuery(search_string)
+    # print(search_query, "\n", search_query.true_entities, "\n \n" )
+    # print("entity_search", search_query.search_string)
+
+    c = db_conn.cursor()
+    for i in range(3, 0, -1):  # Try combinations with up to 3 words
+        pos = -1  # position of the words in the string
+        for query_term in window(search_query.array, n=i):
+            pos += 1  # windows is moved to the right
+            options = [query_term]
+            # apply_f_n_combinations(query_term, inflection.pluralize, options)
+            # apply_f_n_combinations(query_term, inflection.singularize, options)
+            # print("options", options)
+            for option in options:
+                c.execute("select * from entity_mapping where words = ?", (option,))
+                res = c.fetchone()
+                if not res:  # No entity found for string
+                    continue
                 entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
-
-                #Take the highest ranked entity in the crosswiki
-                new_match = SearchMatch(pos, i, entities, query_term)
-
-                add_new_term_check_overlap(new_match, search_query)
-
-
-                # for d in marshal.loads(res[1]):     
-                #     print(d, "\n") 
-
-            except KeyError:
-                # print("KEY ERROR")
-                pass
-
-                # for m1 in search_query.search_matches:
-                # for m2 in search_query.search_matches:
-                #         if m1 is m2:
-                #             continue
-                #
-                #         for e1 in m1.entities:
-                #             a = similarity_score_batch(e1, m2.entities)
-                #             print(a)
-
+                # Create a match with all entities found
+                new_match = SearchMatch(pos, i, entities, option)
+                if take_largest:
+                    if check_overlap(new_match, search_query):
+                        continue
+                new_match.chosen_entity = 0
+                search_query.add_match(new_match)
