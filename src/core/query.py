@@ -120,8 +120,9 @@ class SearchQuery(object):
             self.search_string, TermColor.END, ""))
         print (" |&| ".join(visu))
         for match in self.search_matches:
-            print("{0}{1:<25} | {2}{3}".format(colors[match.rating],
-                match.substring, match.entities[0], TermColor.END))
+            if match.get_chosen_entity():
+                print("{0}{1:<25} | {2}{3}".format(colors[match.rating],
+                                                   match.substring, match.entities[0], TermColor.END))
         
         first=True
         for true_match in self.true_entities:
@@ -131,6 +132,7 @@ class SearchQuery(object):
                 first = False
                 print("{0}{1:<25} | {2}{3}".format(colors[true_match.rating],
                     true_match.substring, true_match.entities[0], TermColor.END))
+        print("All true entities:", self.true_entities)
         print("-"*80 + "\n")
 
     def add_to_export(self, exporter):

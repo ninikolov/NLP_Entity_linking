@@ -4,6 +4,7 @@ TAGME Wrapper
 
 BASE_URL_SCORE = "http://tagme.di.unipi.it/rel?key=tagme-NLP-ETH-2015&lang=en&tt="
 url = "http://tagme.di.unipi.it/rel"
+wiki_synonyms_url = "http://wikisynonyms.ipeirotis.com/api/"
 
 import json
 import os
@@ -16,6 +17,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.par
 
 from core.query import Entity
 import requests_cache
+import urllib
 
 requests_cache.install_cache('../../data/tagme-cache')
 
@@ -35,7 +37,7 @@ def similarity_score(entity1, entity2):
         score = data['result'][0]['rel']
     except KeyError:
         print("Error in syntax of API request - ", request.url)
-        score = 0.
+        score = None
     return float(score)
 
 
@@ -43,7 +45,6 @@ def split_list(alist, wanted_parts=1):
     length = len(alist)
     return [alist[i * length // wanted_parts: (i + 1) * length // wanted_parts]
             for i in range(wanted_parts)]
-
 
 def similarity_score_batch(target_entity, entities):
     """
@@ -80,8 +81,29 @@ def similarity_score_batch(target_entity, entities):
     return scores
 
 
+def check_synonym(entity):
+    """
+    check out http://wikisynonyms.ipeirotis.com/api/ for more info
+    :param entity:
+    :return:
+    """
+    try:
+        request = requests.get(wiki_synonyms_url + urllib.request.quote(entity))
+        data = json.loads(request.text)
+        if data['message'].startswith("Multiple"):
+            return check_synonym(data['terms'][0]['term'])
+        elif data['message'] == 'success':
+            term = data['terms'][0]
+            print(term)
+            if term['canonical'] == 1:
+                return term['term'].replace(" ", "_")
+    except Exception:
+        print("Error in syntax of API request - ", entity)
+        return entity
+
 if __name__ == '__main__':
-    print(similarity_score(Entity("Carlyle,_Illinois", 0.), Entity("Dam_(disambiguation)", 0.)))
-    print(similarity_score(Entity("Broadcasting", 0.), Entity("Anchor_&_Braille", 0.)))
-    print(similarity_score("Justin_Bieber", "Metallica"))
-    print(similarity_score("Zurich", "Coca-Cola"))
+    # print(similarity_score(Entity("Carlyle,_Illinois", 0.), Entity("Dam_(disambiguation)", 0.)))
+    # print(similarity_score(Entity("Broadcasting", 0.), Entity("Anchor_&_Braille", 0.)))
+    # print(similarity_score("Justin_Bieber", "Metallica"))
+    # print(similarity_score("Zurich", "Coca-Cola"))
+    print(check_synonym("Nicki_Minaj"))

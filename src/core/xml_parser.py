@@ -5,9 +5,11 @@ import marshal
 import csv
 import re
 
+import inflection
 from bs4 import BeautifulSoup
 
-from .query import SearchQuery, SearchMatch, Entity, SearchSession
+from .query import SearchQuery, SearchMatch, Entity
+
 
 
 # XML Document documentation
@@ -30,6 +32,10 @@ def parse_xml(file_path):
         soup = BeautifulSoup(f, ["lxml", "xml"])
         assert isinstance(soup, BeautifulSoup)
         return soup
+
+
+def singularize_query(text):
+    return " ".join([inflection.singularize(a) for a in text.split()])
 
 class QueryParser():
     """
@@ -62,89 +68,83 @@ class QueryParser():
         Both Currently 0 by default
         """
         self.query_array = []
-        for session in self.soup.find_all("session"):
-            session_id = session["id"]
-            search_session = SearchSession(session_id)
-            for query in session.find_all("query"):
-                text = query.find_all("text")[0].text
-                new_query = SearchQuery(text, search_session)
-                search_session.append(new_query)
-                for ann in query.find_all("annotation"):
-                    try:
-                        e = Entity(get_entity_name(ann.find_all("target")[0].text), 1)
-                    except IndexError: # No true_entitiesntity here
-                        #e = Entity("None", 0)
-                        continue
-                    try:
-                        span = ann.find_all("span")[0].text.replace('"', "")
-                        # find the amount of word separators in the string before the occurence of span
-                        #print(new_query.search_string, "=>", span)
-                        str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
-                        pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
-                        assert(isinstance(pos, int))
-                        new_match = SearchMatch(pos, len(span.split()), [e], span)
-                        new_match.chosen_entity = 0
-                        new_query.true_entities.append(new_match)
-                    except:
-                        print("Couldn't add \"%s\", there was some issue" % text)
-                        new_query = None
-                    #print("LINK: " + e.link)
-                if new_query:
-                    self.query_array.append(new_query)
+        for query in self.soup.find_all("query"):
+            query_str = query.find_all("text")[0].text
+            # query_str = query_str.strip().lower()
+            #query_str = " ".join(c for c in query_str if c not in ('!','.',':', ','))
+            new_query = SearchQuery(query_str)
+            for ann in query.find_all("annotation"):
+                try:
+                    entity = Entity(get_entity_name(ann.find_all("target")[0].text), 1)
+                except IndexError: # No true_entitiesntity here
+                    #e = Entity("None", 0)
+                    continue
+                try:
+                    span = ann.find_all("span")[0].text.replace('"', "")
+                    # find the amount of word separators in the string before the occurence of span
+                    #print(new_query.search_string, "=>", span)
+                    str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
+                    print(str_before)
+                    pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                    assert(isinstance(pos, int))
+                    new_match = SearchMatch(pos, len(span.split()), [entity], span)
+                    new_match.chosen_entity = 0
+                    new_query.true_entities.append(new_match)
+                except Exception as e:
+                    # raise e
+                    print("Couldn't add \"%s\", there was some issue" % query_str)
+                    new_query = None
+                #print("LINK: " + e.link)
+            if new_query:
+                self.query_array.append(new_query)
 
-def load_dict(file_path):
+
+def load_dict(file_path, fix=False):
     """
     :param file_path:
     :return:
     """
-    # assert isinstance(str, file_path)
     conn = sqlite3.connect(file_path + "-db.db")
     c = conn.cursor()
-    i = 0
     try:
-        c.execute('''CREATE TABLE entity_mapping
-             (words TEXT, entities BLOB)''')
-        c.execute('''CREATE TABLE unique_entities
-             (entity TEXT)''')
-
+        c.execute('''CREATE TABLE entity_mapping (words TEXT, entities BLOB)''')
         with open(file_path, "r", encoding='utf-8') as csvfile:
-            # this is a csv reader
             crosswiki = csv.reader(csvfile, delimiter="\t")
             first_row = next(crosswiki)
-            first_search_word = first_row[0]
-            super_dict = {}
-            super_dict[first_search_word] = []
-
+            search_word = first_row[0]
+            contents = []
+            counter = 0
+            c.execute('BEGIN TRANSACTION')
             for row in crosswiki:
                 # Loop through all the rows in the csv
-                # row[0] contains the search string
-                # if current row[0] word is different,
-                # create new key in the dictionary and add a empty list
-                if row[0] != first_search_word:
-                    super_dict[row[0]] = []
-                    first_search_word = row[0]
-
-                # unfortunately, the csv file is not consistent
-                # so the the second part (probability and entity)
-                # are seperated by a space instead of a tab
-                # splitting that!
-                row_ = row[1].split()
-
+                if row[0] != search_word:
+                    if contents:
+                        c.execute('INSERT INTO entity_mapping VALUES(?, ?)', (search_word, marshal.dumps(contents)))
+                        counter += 1
+                    contents = []
+                    search_word = row[0]
+                if counter == 30000:  # Buffer insert queries and commit them at once
+                    conn.commit()
+                    counter = 0
+                    c.execute('BEGIN TRANSACTION')
+                # Split second part of csv - different separator from \t
+                try:
+                    row_ = row[1].split()
+                except:
+                    continue
+                prob = row_[0]
+                entity = row_[1]
+                if fix:
+                    if row[0].startswith(" ") or row[0].endswith(" "):
+                        continue
+                    entity = fix_entity(entity)
                 # adding the entity and prob to the list as a dictionary
-
-                super_dict[row[0]].append((row_[1], row_[0]))
-
-            print("Key Dict created...")
-            for key in super_dict.keys():
-                c.execute('INSERT INTO entity_mapping VALUES(?, ?)', (key, marshal.dumps(super_dict[key])))
-
-            conn.commit()
+                contents.append((entity, prob))
             print("Database created")
-
     except sqlite3.OperationalError:
         print("Database already exists, cool!")
-
     return conn
+
 
 def load_wiki_names(file_path):
     """
@@ -157,7 +157,7 @@ def load_wiki_names(file_path):
     i = 0
     try:
         c.execute('''CREATE TABLE entity
-             (wiki_title TEXT)''')
+             (wihki_title TEXT)''')
 
         with open(file_path, "r", encoding='utf-8') as csvfile:
             # this is a csv reader
@@ -173,3 +173,8 @@ def load_wiki_names(file_path):
         print("Database already exists, cool!")
 
     return conn
+
+def fix_entity(entity):
+    assert isinstance(entity, str)
+    entity = entity[0].upper() + entity[1:]
+    return entity
