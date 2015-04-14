@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from core.helper import TermColor
 import re
+import wikipedia
+from wikipedia import DisambiguationError
+import enchant
+spell = enchant.Dict("en_US")
 # "TP-strict", "TP-relaxed", "FP", "FN"
 EXPORT_COLORS = {
     "FN": "blue",
@@ -33,6 +37,13 @@ class SearchQuery(object):
     def add_match(self, match):
         # match: SearchMatch
         self.search_matches.append(match)
+
+    def spell_check(self):
+        for w in self.array:
+            if not spell.check(w):
+                sug = spell.suggest(w)
+                w = sug[0]
+                print(spell.suggest(w))
 
     def rank_matches(self):
         pass
@@ -203,10 +214,35 @@ class SearchMatch(object):
     #     """
     #     return self.substring, self.entities[0]
 
+entity_correction_mapper = {}
+
 class Entity(object):
     def __init__(self, link, probability):
         self.link = link
         self.probability = float(probability)
+
+    def validate(self):
+        if self.link in entity_correction_mapper:
+            self.link = entity_correction_mapper[self.link]["entity"]
+        else:
+            try:
+                if self.link.endswith("(disambiguation)"):
+                    searchlink = self.link.replace("_(disambiguation)", "")
+                    diambiguation = True
+                else: searchlink = self.link
+                p = wikipedia.page(searchlink)
+                entity_correction_mapper[self.link] = {
+                    "pageid": p.pageid,
+                    "entity": p.url.replace("http://en.wikipedia.org/wiki/", ""),
+                    "title": p.title
+                }
+                self.link = entity_correction_mapper[self.link]["entity"]
+
+            except DisambiguationError:
+                print("Entity: ", self.link, " leads to an disambiguation error!")
+            except:
+                import sys
+                print("Unexpected error:", sys.exc_info()[0])
 
     def __repr__(self):
         return "<Entity: %s %f>" % (self.link, self.probability)

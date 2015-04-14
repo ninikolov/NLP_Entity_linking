@@ -100,9 +100,12 @@ def load_dict(file_path):
     # assert isinstance(str, file_path)
     conn = sqlite3.connect(file_path + "-db.db")
     c = conn.cursor()
+    i = 0
     try:
         c.execute('''CREATE TABLE entity_mapping
              (words TEXT, entities BLOB)''')
+        c.execute('''CREATE TABLE unique_entities
+             (entity TEXT)''')
 
         with open(file_path, "r", encoding='utf-8') as csvfile:
             # this is a csv reader
@@ -128,6 +131,7 @@ def load_dict(file_path):
                 row_ = row[1].split()
 
                 # adding the entity and prob to the list as a dictionary
+
                 super_dict[row[0]].append((row_[1], row_[0]))
 
             print("Key Dict created...")
@@ -142,3 +146,30 @@ def load_dict(file_path):
 
     return conn
 
+def load_wiki_names(file_path):
+    """
+    :param file_path:
+    :return:
+    """
+    # assert isinstance(str, file_path)
+    conn = sqlite3.connect(file_path + "-db.db")
+    c = conn.cursor()
+    i = 0
+    try:
+        c.execute('''CREATE TABLE entity
+             (wiki_title TEXT)''')
+
+        with open(file_path, "r", encoding='utf-8') as csvfile:
+            # this is a csv reader
+            names = csv.reader(csvfile, delimiter="\t")
+
+            for row in names:
+                c.execute('INSERT INTO entity VALUES(?)', (row[0], )) # , (row[0], re.sub("[^\w\s]", " ", row[0])
+
+        conn.commit()
+        print("Database created")
+
+    except sqlite3.OperationalError:
+        print("Database already exists, cool!")
+
+    return conn

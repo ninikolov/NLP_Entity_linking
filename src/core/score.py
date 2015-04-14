@@ -28,6 +28,7 @@ def evaluate_score(query, parser, use_chosen_entity=False):
                 match_entity = match.get_chosen_entity()
             else:
                 match_entity = match.entities[0]
+            match_entity.validate()
             #print("2: true_match: ",get_entity_name(true_match.entities[0].link))
             if (match_entity.link == true_match.entities[0].link):
                 #assert(not is_matched) #There should not be 2 identical true_entities
