@@ -8,7 +8,7 @@ import re
 import inflection
 from bs4 import BeautifulSoup
 
-from .query import SearchQuery, SearchMatch, Entity
+from .query import SearchQuery, SearchMatch, Entity, SearchSession
 
 
 
