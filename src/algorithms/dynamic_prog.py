@@ -2,8 +2,6 @@
 import argparse
 import os
 import sys
-import pdb
-import numpy as np
 
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
@@ -24,7 +22,7 @@ THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../../data/"
 TRAIN_XML = args.testfile
-DICT = "crosswikis-dict-preprocessed"
+DICT = "crosswikis-dict-preprocessed_new"
 # Limit how many entities we look up in the table for the voting
 ENTITIES_LIMIT = 5
 # Tau

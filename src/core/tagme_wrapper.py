@@ -36,8 +36,8 @@ def similarity_score(entity1, entity2):
     try:
         score = data['result'][0]['rel']
     except KeyError:
-        print("Error in syntax of API request - ", request.url)
-        score = None
+        # print("Error in syntax of API request - ", request.url)
+        score = 0.
     return float(score)
 
 
@@ -46,7 +46,8 @@ def split_list(alist, wanted_parts=1):
     return [alist[i * length // wanted_parts: (i + 1) * length // wanted_parts]
             for i in range(wanted_parts)]
 
-def similarity_score_batch(target_entity, entities):
+
+def similarity_score_batch(target_entity, entities, ignore_missing=False):
     """
     Compute similarity score in batch, for a single target entity
     :param target_entity:
@@ -70,12 +71,20 @@ def similarity_score_batch(target_entity, entities):
             scores += similarity_score_batch(target_entity, sublist)
         return scores
     error_count = 0
-    for res in data['result']:
+    result = data['result']
+    result_sz = len(result)
+    assert len(entities) == result_sz
+    for i in range(result_sz):
+        res = result[i]
         try:
             scores.append(float(res['rel']))
         except KeyError:
             error_count += 1
-            scores.append(None)
+            # print("error for ", res)
+            if ignore_missing:
+                scores.append(0.)
+            else:
+                scores.append(None)
     # if error_count > 0:
     #    print(error_count, " erros in syntax of API request - ", request.url)
     return scores

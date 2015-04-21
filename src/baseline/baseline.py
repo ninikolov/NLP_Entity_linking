@@ -12,6 +12,7 @@ from itertools import islice
 import marshal
 import os.path
 import sys
+import itertools
 
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
@@ -59,6 +60,8 @@ def check_overlap(new_match, search_query):
     """
 
     for previous_match in search_query.search_matches:
+        if not previous_match.entities:
+            continue
         # print("         * prev:", previous_match.position, " ",
         # previous_match.substring, " (", previous_match.word_count, ")")
 
@@ -84,6 +87,51 @@ def check_overlap(new_match, search_query):
     return False
 
 
+def check_overlap_v2(match2, search_query):
+    """
+    Checks if the new search term is overlapping with
+    previous search terms in the query, based on their
+    relative positions.
+    * If it is overlapping and shorter, it is not added
+    (ie. the longer string is kept)
+    * If it is overlapping and of same length, the entity
+    with highest probability is kept.
+
+    :param match2:
+    :return: Returns True if it is overlapping or
+    """
+
+    for match1 in search_query.search_matches:
+        if not match1.entities:
+            continue
+        for match2 in search_query.search_matches:
+
+            # print("         * prev:", previous_match.position, " ",
+            # previous_match.substring, " (", previous_match.word_count, ")")
+
+            if (( match1.position < match2.position + match2.word_count <
+                          match1.position + match1.word_count) or
+                    (match1.position < match2.position <
+                             match1.position + match1.word_count)):
+                # there is an overlap
+                # if (new_match.word_count < previous_match.word_count):
+                # #new term is shorter
+                # # print("         *** SHORTER >> SKIP")
+                # return True
+                #
+                # assert (new_match.word_count == previous_match.word_count)
+
+                if (len(match2.entities) < len(match1.entities)):
+                    #new term is of same length but less probable
+                    # print("         *** LOWER PROB ", new_match.entity.probability, " >> SKIP")
+                    return True
+                else:
+                    #remove old match
+                    match1.chosen_entity = -1
+
+    return False
+
+
 def search_entities(search_query, db_conn, take_largest=True):
     """
     :param search_string:
@@ -104,6 +152,8 @@ def search_entities(search_query, db_conn, take_largest=True):
             if not res:  # No entity found for string
                 continue
             entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
+            if not entities:
+                continue
             # Create a match with all entities found
             new_match = SearchMatch(pos, i, entities, query_term)
             if take_largest:
@@ -113,15 +163,12 @@ def search_entities(search_query, db_conn, take_largest=True):
             search_query.add_match(new_match)
 
 
-import itertools
-
-
 def apply_f_n_combinations(text, f_n, out=[]):
     """
-
-    :param text:
-    :param f_n:
-    :return:
+    Generate combinations of words by applying function
+    :param text: the string of text
+    :param f_n: the function
+    :return: array of combinations
     """
     l = text.split()
     l_size = len(l)
@@ -173,6 +220,8 @@ def search_entities_v2(search_query, db_conn, take_largest=True):
                 if not res:  # No entity found for string
                     continue
                 entities = [Entity(d[0], d[1]) for d in marshal.loads(res[1])]
+                if not entities:
+                    continue
                 # Create a match with all entities found
                 new_match = SearchMatch(pos, i, entities, option)
                 if take_largest:

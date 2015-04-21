@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-from core.helper import TermColor
 import re
+
 import wikipedia
 from wikipedia import DisambiguationError
 import enchant
+
+from core.helper import TermColor
+
 spell = enchant.Dict("en_US")
 # "TP-strict", "TP-relaxed", "FP", "FN"
 EXPORT_COLORS = {
@@ -27,7 +30,7 @@ class SearchSession(list):
 
 
 class SearchQuery(object):
-    def __init__(self, search_string, session):
+    def __init__(self, search_string, session=None):
         self.search_string = search_string
         self.array = re.findall(r"[\w]+", search_string)
         self.search_matches = []
@@ -42,7 +45,10 @@ class SearchQuery(object):
         for w in self.array:
             if not spell.check(w):
                 sug = spell.suggest(w)
-                w = sug[0]
+                try:
+                    w = sug[0]
+                except IndexError:
+                    pass
                 print(spell.suggest(w))
 
     def rank_matches(self):
@@ -53,7 +59,7 @@ class SearchQuery(object):
         return self.search_string
 
     def get_chosen_entities(self):
-        return [m.entities[m.chosen_entity] for m in self.search_matches if m.chosen_entity >= 0]
+        return [m.entities[m.chosen_entity] for m in self.search_matches if m.entities and m.chosen_entity >= 0]
 
     def clean(self):
         for match in self.search_matches:
@@ -122,8 +128,8 @@ class SearchQuery(object):
         for match in self.search_matches:
             if match.get_chosen_entity():
                 print("{0}{1:<25} | {2}{3}".format(colors[match.rating],
-                                                   match.substring, match.entities[0], TermColor.END))
-        
+                                                   match.substring, match.get_chosen_entity(), TermColor.END))
+
         first=True
         for true_match in self.true_entities:
             if (not true_match.rating in ("TP-strict", "TP-relaxed")):
@@ -164,7 +170,7 @@ class SearchQuery(object):
         m = list(self.true_entities)
         m.sort(key=lambda s: s.position)
         for t in m:
-            print("True Ent: ", t)
+            # print("True Ent: ", t)
             ent = t.get_chosen_entity()
             print(ent.link, t.word_count, t.position)
             if ent:
@@ -187,10 +193,13 @@ class SearchMatch(object):
         self.rating = "" # "TP-strict", "TP-relaxed", "FP", "FN"
 
     def __repr__(self):
-        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities[0])
+        try:
+            return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities[0])
+        except IndexError:
+            return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, "None")
 
     def get_chosen_entity(self):
-        if self.chosen_entity >= 0:
+        if self.entities and self.chosen_entity >= 0:
             return self.entities[self.chosen_entity]
         else:
             return None

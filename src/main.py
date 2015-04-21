@@ -8,13 +8,14 @@ import sys
 sys.path.append("./lib/odswriter/")
 
 from baseline import baseline
-from core.xml_parser import QueryParser, load_dict, load_wiki_names
+from core.xml_parser import QueryParser, load_dict
 from core.score import evaluate_score, print_F1
 import core.query
+from core.export import Export
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-            default="query-data-short-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
@@ -49,7 +50,9 @@ def main():
             true_match.get_chosen_entity().validate()
         evaluate_score(q, parser)
         q.visualize()
+        q.add_to_export(exporter)
 
+    exporter.export()
     print_F1(parser)
 
     f_entity_correction_mapper = open(DATA_DIR + ENTITY_CHECKER_MAP, "wb+")
