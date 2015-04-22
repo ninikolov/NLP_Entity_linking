@@ -83,7 +83,7 @@ def reconstruct_best_solution(state_matrix,matches):
             if index== len(state_matrix[len(state_matrix)-1])-1 and max_val==0:
                 max_state=cur_state
                 ##print in reds
-        #            print("{0}{1}{2}".format('\033[91m',"Max value was 0!!!",'\033[0m'))
+                print("{0}{1}{2}".format('\033[91m',"Max value was 0 PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP!!!",'\033[0m'))
         #set entity of last match
         current_target_match=matches[len(state_matrix)-1]
         current_target_match.chosen_entity = max_state.entity_index
@@ -140,20 +140,41 @@ def build_dynamic_prog_matrix(matches,state_matrix,limit=ENTITIES_LIMIT):
                 #keep track of max state during calculation
                 max_val=0
                 max_state=None
+                first_state=None
+                
+                #previous max
+                previous_max_val=0
+                previous_max_state=None
                 for i in range(len(state_matrix[index-1])):
                     similarity_val=similarity_score(entity, state_matrix[index - 1][i].entity) #often errors so equals zero!
                     new_val=float(state_matrix[index - 1][i].value*entity.probability* similarity_val *SIGMA) #check float value
                     new_state=Dynamic_state(state_matrix[index - 1][i],new_val, entity,entity_index)
+                    if(i==0): 
+                        first_state=new_state
+                        previous_max_state=Dynamic_state(state_matrix[index - 1][i],state_matrix[index - 1][i].value, entity,entity_index)
                     
-                    
+                    #compare previous max as well
+                    if state_matrix[index - 1][i].value > previous_max_val:
+                        previous_max_val=state_matrix[index - 1][i].value
+                        previous_max_state=Dynamic_state(state_matrix[index - 1][i],previous_max_val, entity,entity_index)
+                        
                     if max_val < new_val:
                         max_val=new_val
                         max_state=new_state
+                        ##print  OK in blue
+                        print("{0}{1}{2}".format('\033[94m',"OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK!!",'\033[0m'))
                     
                     #if last iteration and still equals null add last with low value!
                     if i== len(state_matrix[index-1])-1 and max_val ==0:
-                        max_val=0.1
-                        max_state=new_state
+
+                         #take previous max state as state val                        
+#                        max_state=previous_max_state
+                        
+                        #before first_state with artificial val
+                        max_state=first_state
+                        #set artificial val
+                        max_val=0.00001
+                        max_state.value=max_val
                         ##print in yellow
 #                        print("{0}{1}{2}".format('\033[93m',"Max value was 0 in state_matrix!!",'\033[0m'))
 #                    print("For possible entity ", entity.link, " value is ", new_val)
