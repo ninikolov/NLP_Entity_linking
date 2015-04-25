@@ -13,12 +13,10 @@ from .query import SearchQuery, SearchMatch, Entity
 
 
 
-
-
 # XML Document documentation
 # session -> mult. query
 
-FIX_STRING = False
+FIX_STRING = True
 
 wiki_base = "http://en.wikipedia.org/wiki/"
 
@@ -105,7 +103,7 @@ class QueryParser():
                     position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
                     assert (isinstance(position, int))
                     new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
-                    print("mm", new_match)
+                    # print("mm", new_match)
                     new_match.chosen_entity = 0
                     new_query.true_entities.append(new_match)
                 except Exception as e:
@@ -119,9 +117,10 @@ class QueryParser():
 
 def fix_string(query_str):
     query_str = query_str.strip().lower()
+    # query_str = " ".join(inflection.singularize(word) for word in query_str.split())
     query_str = "".join(c for c in query_str if c not in ('!', ':', ',', '\'', '"', '?'))
     query_str = query_str.replace(" s ", " ")
-    query_str = " ".join(inflection.singularize(word) for word in query_str.split())
+    print(query_str)
     return query_str
 
 

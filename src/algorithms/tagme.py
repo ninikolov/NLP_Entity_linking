@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.par
 from core.tagme_wrapper import *
 from core.xml_parser import load_dict, QueryParser
 
-from baseline.baseline import search_entities
+from core.segmentation import search_entities
 from core.score import evaluate_score, print_F1
 import math
 from core.export import Export
@@ -29,6 +29,7 @@ parser.add_argument("--testfile", "-t", help="Select XML file",
 
 args = parser.parse_args()
 
+
 THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../../data/"
@@ -44,7 +45,7 @@ THETA = 0.3
 # If nobody has vote above this we'll just take the top entity
 EPSILON = 0.1
 #
-DEBUG = False
+DEBUG = True
 
 
 def rel(target_entity, other_entities):

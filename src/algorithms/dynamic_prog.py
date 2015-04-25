@@ -12,6 +12,7 @@ from core.xml_parser import load_dict, QueryParser
 from baseline.baseline import search_entities
 from core.score import evaluate_score, print_F1
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
                     default="query-data-dev-set.xml")
@@ -237,6 +238,7 @@ if __name__ == '__main__':
         reconstruct_best_solution(state_matrix,query.search_matches)
 #        final = prune(query)
 #        print("Final entities after pruning: ", final)
+        # prune(query)
         evaluate_score(query, parser, use_chosen_entity=True)
         query.visualize()
 

@@ -12,6 +12,7 @@ def evaluate_score(query, parser, use_chosen_entity=False):
 
     set_entities_matched = []
     for match in query.search_matches:
+
         parser.total_matches += 1
         if match.chosen_entity == -1:
             # disregard all matches where no entity chosen
@@ -80,6 +81,7 @@ def evaluate_score(query, parser, use_chosen_entity=False):
         if not (is_matched or true_match.rating == "FP-Corresponding_true_entity"):
             parser.fn += 1
             true_match.rating = "FN"
+
 
 def print_F1(parser):
     # compute precision, recall and f1

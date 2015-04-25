@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
+from urllib.request import unquote
 
 import wikipedia
 from wikipedia import DisambiguationError
 import enchant
 
 from core.helper import TermColor
+
 
 spell = enchant.Dict("en_US")
 # "TP-strict", "TP-relaxed", "FP", "FN"
@@ -26,7 +28,7 @@ class SearchSession(list):
 
     def __repr__(self):
         return str("<SearchSession: " + self.session_id + ": "
-                    + super().__repr__() + ">")
+                   + super().__repr__() + ">")
 
 
 class SearchQuery(object):
@@ -55,7 +57,7 @@ class SearchQuery(object):
         pass
 
     def __repr__(self):
-        #return "<SearchQuery: %s>" % self.search_string
+        # return "<SearchQuery: %s>" % self.search_string
         return self.search_string
 
     def get_chosen_entities(self):
@@ -67,7 +69,7 @@ class SearchQuery(object):
 
 
     # def choose_best_entities(self):
-    #     """
+    # """
     #     TODO: Figure out a better way to do this
     #     """
     #     best_entities = {}
@@ -82,16 +84,16 @@ class SearchQuery(object):
     def visualize(self):
 
         colors = {'TP-strict': TermColor.GREEN, 'TP-relaxed': TermColor.YELLOW, 'FP': TermColor.RED,
-        'FP-Corresponding_true_entity':TermColor.RED, 'FN': TermColor.BLUE, "": TermColor.CYAN}
+                  'FP-Corresponding_true_entity': TermColor.RED, 'FN': TermColor.BLUE, "": TermColor.CYAN}
 
         #The query is normally visualised once. But if some matches are overlapping, we will need to show
         #the string more than once so that all the matches can be seen.
-        visu = [] #search string visalization
-        index_ssv = 0 #index search string vizualization
-        
-        search_matches_copy = list(self.search_matches) 
+        visu = []  # search string visalization
+        index_ssv = 0  #index search string vizualization
 
-        while len(search_matches_copy)>0:
+        search_matches_copy = list(self.search_matches)
+
+        while len(search_matches_copy) > 0:
             word_pointer = 0
             visu.append("")
             while word_pointer < len(self.array):
@@ -100,17 +102,17 @@ class SearchQuery(object):
                 for match in search_matches_copy:
                     if (not match.rating):
                         search_matches_copy.remove(match)
-                        break #This should normally not happen. However it seems that it happens in the case where
+                        break  #This should normally not happen. However it seems that it happens in the case where
                         #the xml is incomplete (check dev-set "New York American Girl dolls cost"). TODO : Look into that.
                     if match.position == word_pointer:
                         #we check the starting position of the match.
                         #followed by an assert : check if the words (not ony position) coincide 
-                        assert(match.substring.split()[0] == self.array[word_pointer])
-                        visu[index_ssv] +=  "{0}{1}{2} ".format(
+                        assert (match.substring.split()[0] == self.array[word_pointer])
+                        visu[index_ssv] += "{0}{1}{2} ".format(
                             colors[match.rating], match.substring, TermColor.END)
                         word_pointer += match.word_count
                         if (word_pointer < len(self.array)):
-                            visu[index_ssv] += "| " #Separate the matches
+                            visu[index_ssv] += "| "  #Separate the matches
                         match_exists = True
                         search_matches_copy.remove(match)
                         break
@@ -122,24 +124,24 @@ class SearchQuery(object):
             #not be empty here so it will go through the while loop again. 
             index_ssv += 1
 
-        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, 
-            self.search_string, TermColor.END, ""))
-        print (" |&| ".join(visu))
+        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD,
+                                                   self.search_string, TermColor.END, ""))
+        print(" |&| ".join(visu))
         for match in self.search_matches:
             if match.get_chosen_entity():
                 print("{0}{1:<25} | {2}{3}".format(colors[match.rating],
                                                    match.substring, match.get_chosen_entity(), TermColor.END))
 
-        first=True
+        first = True
         for true_match in self.true_entities:
             if (not true_match.rating in ("TP-strict", "TP-relaxed")):
                 if (first):
                     print("Missed entities:")
                 first = False
                 print("{0}{1:<25} | {2}{3}".format(colors[true_match.rating],
-                    true_match.substring, true_match.entities[0], TermColor.END))
+                                                   true_match.substring, true_match.entities[0], TermColor.END))
         print("All true entities:", self.true_entities)
-        print("-"*80 + "\n")
+        print("-" * 80 + "\n")
 
     def add_to_export(self, exporter):
         from collections import OrderedDict
@@ -188,15 +190,15 @@ class SearchMatch(object):
         self.position = position
         self.word_count = word_count
         self.entities = entities
-        self.chosen_entity = -1 # a positive number indicates array index 
-                                # of chosen entity, -1 == no entity chosen
-        self.rating = "" # "TP-strict", "TP-relaxed", "FP", "FN"
+        self.chosen_entity = -1  # a positive number indicates array index
+        # of chosen entity, -1 == no entity chosen
+        self.rating = ""  # "TP-strict", "TP-relaxed", "FP", "FN"
 
     def __repr__(self):
-        try:
-            return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, self.entities[0])
-        except IndexError:
-            return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, "None")
+        # try:
+        return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, [e for e in self.entities])
+        # except IndexError:
+        # return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, [e for e in self.entities])
 
     def get_chosen_entity(self):
         if self.entities and self.chosen_entity >= 0:
@@ -220,12 +222,14 @@ class SearchMatch(object):
         self.entities = [self.entities[self.chosen_entity]]
         self.chosen_entity = 0 if self.chosen_entity > -1 else -1
 
-    # def choose_best_match(self):
-    #     """
-    #     """
-    #     return self.substring, self.entities[0]
+        # def choose_best_match(self):
+        # """
+        # """
+        #     return self.substring, self.entities[0]
+
 
 entity_correction_mapper = {}
+
 
 class Entity(object):
     def __init__(self, link, probability):
@@ -240,7 +244,8 @@ class Entity(object):
                 if self.link.endswith("(disambiguation)"):
                     searchlink = self.link.replace("_(disambiguation)", "")
                     diambiguation = True
-                else: searchlink = self.link
+                else:
+                    searchlink = self.link
                 p = wikipedia.page(searchlink)
                 entity_correction_mapper[self.link] = {
                     "pageid": p.pageid,
@@ -248,11 +253,13 @@ class Entity(object):
                     "title": p.title
                 }
                 self.link = entity_correction_mapper[self.link]["entity"]
+                self.link = unquote(self.link)
 
             except DisambiguationError:
                 print("Entity: ", self.link, " leads to an disambiguation error!")
             except:
                 import sys
+
                 print("Unexpected error:", sys.exc_info()[0])
 
     def __repr__(self):

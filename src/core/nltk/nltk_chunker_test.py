@@ -28,8 +28,8 @@ chunker = nltk.RegexpParser(grammar)
  
 toks = nltk.regexp_tokenize(text, sentence_re)
 postoks = nltk.tag.pos_tag(toks)
- 
-print postoks
+
+print(postoks)
  
 tree = chunker.parse(postoks)
  
@@ -65,5 +65,4 @@ terms = get_terms(tree)
  
 for term in terms:
     for word in term:
-        print word,
-    print
+        print(word)
