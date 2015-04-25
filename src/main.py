@@ -42,7 +42,6 @@ def main():
 
     exporter = Export()
 
-
     for q in parser.query_array:
         entities = baseline.search_entities(q, db_conn)
         q.spell_check()

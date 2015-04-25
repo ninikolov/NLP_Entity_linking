@@ -12,6 +12,7 @@ from core.xml_parser import QueryParser, load_dict
 from core.score import evaluate_score, print_F1
 import core.query
 from core.export import Export
+from core.nltk.nltk_functions import chunk
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
@@ -43,20 +44,7 @@ def nltk_parser():
     exporter = Export()
 
     for q in parser.query_array:
-        entities = baseline.search_entities(q, db_conn)
-        q.spell_check()
-        for true_match in q.true_entities:
-            true_match.get_chosen_entity().validate()
-        evaluate_score(q, parser)
-        q.visualize()
-        q.add_to_export(exporter)
-
-    exporter.export()
-    print_F1(parser)
-
-    f_entity_correction_mapper = open(DATA_DIR + ENTITY_CHECKER_MAP, "wb+")
-    marshal.dump(core.query.entity_correction_mapper, f_entity_correction_mapper)
-
+        print(chunk(q.search_array))
 
 if __name__ == "__main__":
-    main()
+    nltk_parser()
