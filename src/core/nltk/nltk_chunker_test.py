@@ -15,7 +15,7 @@ sentence_re = r'''(?x)      # set flag to allow verbose regexps
  
 lemmatizer = nltk.WordNetLemmatizer()
 stemmer = nltk.stem.porter.PorterStemmer()
- 
+
 #Taken from Su Nam Kim Paper...
 grammar = r"""
     NBAR:
@@ -54,8 +54,8 @@ def acceptable_word(word):
     accepted = bool(2 <= len(word) <= 40
         and word.lower() not in stopwords)
     return accepted
- 
- 
+
+
 def get_terms(tree):
     for leaf in leaves(tree):
         term = [ normalise(w) for w,t in leaf if acceptable_word(w) ]

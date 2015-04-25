@@ -13,10 +13,11 @@ from .query import SearchQuery, SearchMatch, Entity
 
 
 
+
 # XML Document documentation
 # session -> mult. query
 
-FIX_STRING = True
+FIX_STRING = False
 
 wiki_base = "http://en.wikipedia.org/wiki/"
 
