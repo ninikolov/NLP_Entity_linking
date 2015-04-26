@@ -45,13 +45,15 @@ THETA = 0.3
 # If nobody has vote above this we'll just take the top entity
 EPSILON = 0.1
 #
-DEBUG = True
+DEBUG = False
+COUNTER = 0
+ALL_ENTITIES = 0
 
 
 def rel(target_entity, other_entities):
     scores = similarity_score_batch(target_entity, other_entities, ignore_missing=True)
     assert len(scores) == len(other_entities)
-    return np.sum(scores)
+    return np.nansum(scores)
 
 
 def match_vote(target_entity, other_entities, normalize=True):
@@ -113,11 +115,12 @@ def choose_entity(target_match, matches, match_index, limit=ENTITIES_LIMIT):
     if DEBUG:
         print("Tagme chooses", target_match.entities[winner_entity], "for match", target_match.substring,
               " | vote", entity_votes[winner_entity], " | errors", total_errors, " | total size", total_size)
-        print([(other_entitites[i].link, "V=" + str(entity_votes[i])) for i in range(len(other_entitites[0:10]))])
+        # print([(other_entitites[i].link, "V=" + str(entity_votes[i])) for i in range(len(other_entitites[0:10]))])
     target_match.chosen_entity = winner_entity
 
 
 def choose_best_epsilon(entities, votes, epsilon=EPSILON):
+    global COUNTER
     top = 0.
     top_ind = -1
     for i in range(len(votes)):
@@ -129,6 +132,7 @@ def choose_best_epsilon(entities, votes, epsilon=EPSILON):
     if top_ind < 0:
         # print("Opting for default entity")
         return 0
+    COUNTER += 1
     return top_ind
 
 
@@ -145,7 +149,8 @@ def choose_best_size_limit(entities, votes, part_limit=10):
             top_ind = i
     return top_ind
 
-def check_coherence(entity_index, other_entities, theta=THETA):
+
+def check_coherence(entity_index, other_entities):
     """
     Check the coherence of an entity - how relevant it is in the context of the other selected entities.
     :param entity_index:
@@ -163,10 +168,10 @@ def check_coherence(entity_index, other_entities, theta=THETA):
     coh += other_entities[entity_index].probability / 2
     if DEBUG:
         print("\t\tCoherence of ", other_entities[entity_index].link, ": ", coh)
-    return coh > theta
+    return coh
 
 
-def prune(query):
+def prune(query, theta=THETA):
     """
     Remove entities that aren't coherent with the overall meaning.
     :param query:
@@ -174,13 +179,22 @@ def prune(query):
     """
     chosen_entities = query.get_chosen_entities()
     final_selection = []
-    for index in range(len(chosen_entities)):
-        if check_coherence(index, chosen_entities):
+    no_of_entities = len(chosen_entities)
+    total_coh = 0.
+    for index in range(no_of_entities):
+        coh = check_coherence(index, chosen_entities)
+        if coh > theta:
             final_selection.append(chosen_entities[index])
+            total_coh += coh
         else:
             query.search_matches[index].chosen_entity = -1
-            if DEBUG:
-                print("\t\t\tPruning entity ", chosen_entities[index])
+            # if DEBUG:
+            print("\t\t\tPruning entity ", chosen_entities[index], "Coherence:", coh)
+    if no_of_entities == 0:
+        total_coh = 0.
+    else:
+        total_coh /= no_of_entities
+    print("Total coherence of this query:", total_coh)
     return final_selection
 
 
@@ -198,6 +212,11 @@ def run():
         final = prune(query)
         if DEBUG:
             print("Final entities after pruning: ", final)
+        for match in query.search_matches:
+            try:
+                match.get_chosen_entity().validate()
+            except:
+                continue
         for true_match in query.true_entities:
             true_match.get_chosen_entity().validate()
         evaluate_score(query, parser, use_chosen_entity=True)
@@ -208,14 +227,15 @@ def run():
     # evaluate solution
     print("Tagme results with parameters ENTITIES_LIMIT=", ENTITIES_LIMIT, "PROB_LIMIT=", PROB_LIMIT, "THETA=", THETA,
           "EPSILON=", EPSILON, ".")
+    print("Times we chose voted entity:", COUNTER, "out of", len(parser.query_array), "queries.")
     return print_F1(parser)
 
 
 if __name__ == '__main__':
     # f1s = {}
-    # for e in [0.01, 0.005, 0.001]:
-    # PROB_LIMIT = e
-    # f1s[e] = run()
+    # for e in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]:
+    # THETA = e
+    #     f1s[e] = run()
     # print(f1s)
     run()
 

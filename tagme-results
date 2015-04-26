@@ -94,3 +94,19 @@ SCORE           | precision    | recall       | F1
 relaxed         |       0.6056 |       0.6367 |       0.6208
 STRICT          |       0.5336 |       0.6069 |       0.5679
 ************************************************************
+
+Tagme results with parameters ENTITIES_LIMIT= 50 PROB_LIMIT= 0.005 THETA= 0.3 EPSILON= 0.1 .
+Times we chose voted entity: 287 out of 519 queries.
+************************************************************
+Total queries :519; Total matches :1084
+(Queries with identical true entities: 4)
+378 Strict True Positives
+111 Relaxed True Positives 
+303 False Positives
+285 False Negatives
+************************************************************
+SCORE           | precision    | recall       | F1          
+------------------------------------------------------------ 
+relaxed         |       0.6174 |       0.6318 |       0.6245
+STRICT          |       0.4773 |       0.5701 |       0.5196
+************************************************************
