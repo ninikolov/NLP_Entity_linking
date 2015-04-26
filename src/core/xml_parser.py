@@ -4,12 +4,13 @@ import sqlite3
 import marshal
 import csv
 import re
+import pdb
 from urllib.request import unquote
 
 from bs4 import BeautifulSoup
 import inflection
 
-from .query import SearchQuery, SearchMatch, Entity
+from .query import SearchQuery, SearchMatch, Entity,SearchSession
 
 
 
@@ -76,44 +77,49 @@ class QueryParser():
         Both Currently 0 by default
         """
         self.query_array = []
-        for query in self.soup.find_all("query"):
-            query_str = unquote(query.find_all("text")[0].text)
-            # print("q:", query_str)
-            if FIX_STRING:
-                query_str = fix_string(query_str)
-                # print("q:", query_str, "\n--")
-            new_query = SearchQuery(query_str)
-            for ann in query.find_all("annotation"):
-                try:
-                    entity_str = extract_entity_name(ann.find_all("target")[0].text)
-                    # print("ent str", entity_str)
-                    entity = Entity(entity_str, 1)
-                except IndexError:  # No true_entitiesntity here
-                    continue
-                try:
-                    match_str = unquote(ann.find_all("span")[0].text.replace('"', ""))
-                    # print("match:", match_str)
-                    if FIX_STRING:
-                        match_str = fix_string(match_str)
+        for session in self.soup.find_all("session"):
+            session_id = session["id"]
+            search_session = SearchSession(session_id)
+            for query in session.find_all("query"):
+                query_str = unquote(query.find_all("text")[0].text)
+                # print("q:", query_str)
+                if FIX_STRING:
+                    query_str = fix_string(query_str)
+                    # print("q:", query_str, "\n--")
+                new_query = SearchQuery(query_str,search_session)
+                search_session.append(new_query)
+                for ann in query.find_all("annotation"):
+                    try:
+                        entity_str = extract_entity_name(ann.find_all("target")[0].text)
+                        # print("ent str", entity_str)
+                        entity = Entity(entity_str, 1)
+                    except IndexError:  # No true_entitiesntity here
+                        continue
+                    try:
+                        match_str = unquote(ann.find_all("span")[0].text.replace('"', ""))
                         # print("match:", match_str)
-                    # find the amount of word separators in the string before the occurence of span
-                    # print(new_query.search_string, "=>", span)
-                    str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
-                                          re.IGNORECASE)
-                    # print("str before", str_before)
-                    position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
-                    assert (isinstance(position, int))
-                    new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
-                    # print("mm", new_match)
-                    new_match.chosen_entity = 0
-                    new_query.true_entities.append(new_match)
-                except Exception as e:
-                    # raise e
-                    print("Couldn't add \"%s\", there was some issue" % query_str)
-                    new_query = None
-                    # print("LINK: " + e.link)
-            if new_query:
-                self.query_array.append(new_query)
+                        if FIX_STRING:
+                            match_str = fix_string(match_str)
+                            # print("match:", match_str)
+                        # find the amount of word separators in the string before the occurence of span
+                        # print(new_query.search_string, "=>", span)
+                        str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
+                                              re.IGNORECASE)
+                        # print("str before", str_before)
+                        position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                        assert (isinstance(position, int))
+                        new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
+                        # print("mm", new_match)
+                        new_match.chosen_entity = 0
+                        new_query.true_entities.append(new_match)
+                    except Exception as e:
+                        # raise e
+#                        pdb.set_trace()
+                        print("Couldn't add \"%s\", there was some issue" % query_str)
+                        new_query = None
+                        # print("LINK: " + e.link)
+                if new_query:
+                    self.query_array.append(new_query)
 
 
 def fix_string(query_str):

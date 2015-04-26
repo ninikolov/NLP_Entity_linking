@@ -8,7 +8,7 @@ import marshal
 
 from core.segmentation import window, check_overlap
 from core.query import Entity, SearchMatch
-from main import main
+#from main import main
 
 
 def search_entities(search_query, db_conn, take_largest=True):

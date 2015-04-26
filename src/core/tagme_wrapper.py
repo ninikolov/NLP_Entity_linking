@@ -36,7 +36,7 @@ def similarity_score(entity1, entity2):
     try:
         score = data['result'][0]['rel']
     except KeyError:
-        # print("Error in syntax of API request - ", request.url)
+#        print("Error in syntax of API request - ", request.url)
         score = 0.
     return float(score)
 

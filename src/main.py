@@ -7,11 +7,12 @@ import sys
 
 sys.path.append("./lib/odswriter/")
 
-from baseline import baseline
+
 from core.xml_parser import QueryParser, load_dict
 from core.score import evaluate_score, print_F1
 import core.query
 from core.export import Export
+from baseline.baseline import search_entities
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
@@ -43,7 +44,7 @@ def main():
     exporter = Export()
 
     for q in parser.query_array:
-        entities = baseline.search_entities(q, db_conn)
+        entities = search_entities(q, db_conn)
         q.spell_check()
         for true_match in q.true_entities:
             true_match.get_chosen_entity().validate()

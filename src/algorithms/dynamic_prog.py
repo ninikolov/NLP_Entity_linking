@@ -2,14 +2,14 @@
 import argparse
 import os
 import sys
-
+import pdb
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.tagme_wrapper import *
 from core.xml_parser import load_dict, QueryParser
 
-from baseline.baseline import search_entities
+from core.segmentation import search_entities
 from core.score import evaluate_score, print_F1
 
 
@@ -25,7 +25,7 @@ DATA_DIR = THIS_DIR + "/../../data/"
 TRAIN_XML = args.testfile
 DICT = "crosswikis-dict-preprocessed_new"
 # Limit how many entities we look up in the table for the voting
-ENTITIES_LIMIT = 5
+ENTITIES_LIMIT = 8
 # Tau
 PROB_LIMIT = 0.01
 # parameter for pruning
@@ -33,6 +33,10 @@ THETA = 0.1
 
 # parameter for similarity power in dynamic programming solution
 SIGMA = 1
+
+# Parameter for session entities impact
+SESSION_COEF=2
+
 
 class Dynamic_state(object):
     def __init__(self, previous_state, value, entity,entity_index):
@@ -103,7 +107,7 @@ def reconstruct_best_solution(state_matrix,matches):
 
 
 #choose entity using dynamic programming
-def build_dynamic_prog_matrix(matches,state_matrix,limit=ENTITIES_LIMIT):
+def build_dynamic_prog_matrix(matches,state_matrix,session_entity_linked,limit=ENTITIES_LIMIT):
     """
     Choose the entity in match1, which maximises the voting function.
     :param matches:
@@ -119,24 +123,25 @@ def build_dynamic_prog_matrix(matches,state_matrix,limit=ENTITIES_LIMIT):
         #for first state
         entity_index=0
         if index==0:
-            
-#            #special case
-#            if len(other_entitites)==0:
-#                print("Other_entities length is 0!")
-#                #add dummy state
-#                current_states.append(Dynamic_state(None,entity.probability, entity,entity_index))
+           
             
             for entity in other_entitites:
-                new_state=Dynamic_state(None,entity.probability, entity,entity_index)
+                
+                
+                val=entity.probability
+                
+                # adapt entity prob depending on previous session entities using coefficients SESSION_COEF
+                for j in range(len(session_entity_linked)):
+                    # if already linked in session, then favor it!
+                    if(session_entity_linked[j] ==entity.link):
+                        val*=SESSION_COEF
+                        break
+                        
+                new_state=Dynamic_state(None,val, entity,entity_index)
                 entity_index+=1
                 current_states.append(new_state)
         else:
-#            #special case
-#            if len(other_entitites)==0:
-#                print("Other_entities length is 0!")
-#                #add dummy state
-#                current_states.append(Dynamic_state(None,entity.probability, entity,entity_index))
-                
+             
             for entity in other_entitites:
                 #keep track of max state during calculation
                 max_val=0
@@ -146,9 +151,21 @@ def build_dynamic_prog_matrix(matches,state_matrix,limit=ENTITIES_LIMIT):
                 #previous max
                 previous_max_val=0
                 previous_max_state=None
+                
+                 
+                val=entity.probability
+                
+                # adapt entity prob depending on previous session entities using coefficients SESSION_COEF
+                for j in range(len(session_entity_linked)):
+                    # if already linked in session, then favor it!
+                    if(session_entity_linked[j] == entity.link):
+                        val*=SESSION_COEF
+                        break
+                
+                
                 for i in range(len(state_matrix[index-1])):
                     similarity_val=similarity_score(entity, state_matrix[index - 1][i].entity) #often errors so equals zero!
-                    new_val=float(state_matrix[index - 1][i].value*entity.probability* similarity_val *SIGMA) #check float value
+                    new_val=float(state_matrix[index - 1][i].value*val* similarity_val *SIGMA) #check float value
                     new_state=Dynamic_state(state_matrix[index - 1][i],new_val, entity,entity_index)
                     if(i==0): 
                         first_state=new_state
@@ -163,7 +180,7 @@ def build_dynamic_prog_matrix(matches,state_matrix,limit=ENTITIES_LIMIT):
                         max_val=new_val
                         max_state=new_state
                         ##print  OK in blue
-                        print("{0}{1}{2}".format('\033[94m',"OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK!!",'\033[0m'))
+#                        print("{0}{1}{2}".format('\033[94m',"OKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK!!",'\033[0m'))
                     
                     #if last iteration and still equals null add last with low value!
                     if i== len(state_matrix[index-1])-1 and max_val ==0:
@@ -222,23 +239,70 @@ def prune(query):
     return final_selection
 
 
+def get_session_info(query):
+    """
+    Get session: basically all entities maped so far
+    """
+    current_session_id=query.session.session_id
+    #need global keyword to modify global var
+    global last_session_id
+    global session_entity_linked
+    if(last_session_id is None):
+        last_session_id=current_session_id
+        actual_entity_linked = query.get_chosen_entities()
+        for i in range(len(actual_entity_linked)):
+            session_entity_linked.append(actual_entity_linked[i].link)
+        return
+    if (last_session_id == current_session_id):
+        actual_entity_linked = query.get_chosen_entities()
+        for i in range(len(actual_entity_linked)):
+            is_duplicate=False;
+            for j in range(len(session_entity_linked)):
+                #don t store duplicate
+                if(actual_entity_linked[i].link == session_entity_linked[j]):
+                    is_duplicate=True
+                    break
+            if ( not is_duplicate): session_entity_linked.append(actual_entity_linked[i].link)
+        return
+    else:
+        last_session_id=current_session_id
+        #empty list
+           
+        session_entity_linked=[]
+        actual_entity_linked = query.get_chosen_entities()
+        for i in range(len(actual_entity_linked)):
+            session_entity_linked.append(actual_entity_linked[i].link)
+        return
+        
 if __name__ == '__main__':
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
+    
+    #use for session info
+    last_session_id=None
+    #keep track of all matched entity for the session so far
+    session_entity_linked=[]
+
     for query in parser.query_array:
         entities = search_entities(query, db_conn)
+        
+#        print("Search matches: ", query.search_matches)
+        
+        
+        get_session_info(query)
 #        pdb.set_trace() #for debugging
-        print("Search matches: ", query.search_matches)
+       
         
         #stores state matrix
         state_matrix=[]
-        build_dynamic_prog_matrix(query.search_matches, state_matrix)
+        build_dynamic_prog_matrix(query.search_matches, state_matrix,session_entity_linked)
         
         #reconstruct best solution
         reconstruct_best_solution(state_matrix,query.search_matches)
+        
+        
 #        final = prune(query)
 #        print("Final entities after pruning: ", final)
-        # prune(query)
         evaluate_score(query, parser, use_chosen_entity=True)
         query.visualize()
 
