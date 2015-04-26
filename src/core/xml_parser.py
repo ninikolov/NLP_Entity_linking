@@ -13,7 +13,6 @@ from .query import SearchQuery, SearchMatch, Entity
 
 
 
-
 # XML Document documentation
 # session -> mult. query
 
@@ -78,10 +77,11 @@ class QueryParser():
         self.query_array = []
         for query in self.soup.find_all("query"):
             query_str = unquote(query.find_all("text")[0].text)
-            # print("q:", query_str)
-            if FIX_STRING:
-                query_str = fix_string(query_str)
-                # print("q:", query_str, "\n--")
+            query_str = query_str.replace('"', "")
+            # if FIX_STRING:
+            # new_query = fix_string(query_str, convert=False)
+            #     # print("Changed query from", query_str, "to", new_query)
+            #     query_str = new_query
             new_query = SearchQuery(query_str)
             for ann in query.find_all("annotation"):
                 try:
@@ -91,11 +91,12 @@ class QueryParser():
                 except IndexError:  # No true_entitiesntity here
                     continue
                 try:
-                    match_str = unquote(ann.find_all("span")[0].text.replace('"', ""))
+                    match_str = unquote(ann.find_all("span")[0].text)
+                    match_str = match_str.replace('"', "")
                     # print("match:", match_str)
-                    if FIX_STRING:
-                        match_str = fix_string(match_str)
-                        # print("match:", match_str)
+                    # if FIX_STRING:
+                    # match_str = fix_string(match_str, convert=False)
+                    # print("match:", match_str)
                     # find the amount of word separators in the string before the occurence of span
                     # print(new_query.search_string, "=>", span)
                     str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
@@ -104,7 +105,6 @@ class QueryParser():
                     position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
                     assert (isinstance(position, int))
                     new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
-                    # print("mm", new_match)
                     new_match.chosen_entity = 0
                     new_query.true_entities.append(new_match)
                 except Exception as e:
@@ -114,16 +114,6 @@ class QueryParser():
                     # print("LINK: " + e.link)
             if new_query:
                 self.query_array.append(new_query)
-
-
-def fix_string(query_str):
-    query_str = query_str.strip().lower()
-    # query_str = " ".join(inflection.singularize(word) for word in query_str.split())
-    query_str = "".join(c for c in query_str if c not in ('!', ':', ',', '\'', '"', '?'))
-    query_str = query_str.replace(" s ", " ")
-    print(query_str)
-    return query_str
-
 
 def load_dict(file_path, fix=False):
     """

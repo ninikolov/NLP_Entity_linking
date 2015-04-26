@@ -8,6 +8,7 @@ import marshal
 from inflection import pluralize, singularize
 
 from core.query import Entity, SearchMatch
+from core.nltk.nltk_functions import hard_fix, soft_fix
 
 
 def window(seq, n=3):
@@ -171,14 +172,18 @@ def search_entities(search_query, db_conn, take_largest=True):
             # apply_f_n_combinations(query_term, inflection.singularize, options)
             # print("options", options)
             for option in options:
+                # methods to apply to try to find something that works
+                # TODO: Figure out smarter ways to use these
+                operations = [singularize, pluralize, soft_fix, hard_fix]
                 result = get_entities(c, option)
-                if not result:  # No entity found in crosswikis for string. Try plural form.
-                    result = get_entities(c, singularize(option))
-                    if not result:
-                        if not result:  # No entity found in crosswikis for string. Try plural form.
-                            result = get_entities(c, pluralize(option))
-                            if not result:
-                                continue
+                while not result and operations:  # apply operations in order until there's results
+                    fixed = operations[0](option)
+                    result = get_entities(c, fixed)
+                    if operations[0] == hard_fix and result and fixed != option:
+                        print("Fixed", option, "to", fixed)
+                    del operations[0]
+                if not result and not operations:
+                    continue
                 entities = [Entity(d[0], d[1]) for d in marshal.loads(result[1])]
                 if not entities:
                     continue

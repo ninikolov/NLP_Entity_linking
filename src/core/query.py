@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
 from urllib.request import unquote
 
 import wikipedia
@@ -34,7 +33,8 @@ class SearchSession(list):
 class SearchQuery(object):
     def __init__(self, search_string, session=None):
         self.search_string = search_string
-        self.array = re.findall(r"[\w]+", search_string)
+        # self.array = re.findall(r"[\w]+", search_string)
+        self.array = self.search_string.split()
         self.search_matches = []
         self.true_entities = []
         self.session = session
@@ -51,7 +51,7 @@ class SearchQuery(object):
                     w = sug[0]
                 except IndexError:
                     pass
-                print(spell.suggest(w))
+                    # print(spell.suggest(w))
 
     def rank_matches(self):
         pass
@@ -174,7 +174,7 @@ class SearchQuery(object):
         for t in m:
             # print("True Ent: ", t)
             ent = t.get_chosen_entity()
-            print(ent.link, t.word_count, t.position)
+            # print(ent.link, t.word_count, t.position)
             if ent:
                 true_res[ent.link] = {
                     "link": "http://en.wikipedia.org/wiki/" + ent.link,

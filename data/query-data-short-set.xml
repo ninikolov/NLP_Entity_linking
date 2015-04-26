@@ -24,5 +24,44 @@
              <target wiki-id="22418985"><![CDATA[http://en.wikipedia.org/wiki/Victoria's_Secret]]></target>
          </annotation>
       </query>
+        <query adult="false" ambiguous="false" assessor="19" cannot-judge="false" navigational="false" no-wp="false"
+               non-english="false" quote-question="false" starttime="81.835439">
+            <text><![CDATA[policies for addressing economic problems in europe]]></text>
+            <annotation main="false">
+                <span><![CDATA[policies]]></span>
+                <target wiki-id="375091"><![CDATA[http://en.wikipedia.org/wiki/Policy]]></target>
+            </annotation>
+            <annotation main="false">
+                <span><![CDATA[for]]></span>
+            </annotation>
+            <annotation main="false">
+                <span><![CDATA[addressing]]></span>
+            </annotation>
+            <annotation main="false">
+                <span><![CDATA[economic]]></span>
+                <target wiki-id="6639133"><![CDATA[http://en.wikipedia.org/wiki/Economy]]></target>
+            </annotation>
+            <annotation main="false">
+                <span><![CDATA[problems]]></span>
+                <target wiki-id="608760"><![CDATA[http://en.wikipedia.org/wiki/Problem]]></target>
+            </annotation>
+            <annotation main="false">
+                <span><![CDATA[in]]></span>
+            </annotation>
+            <annotation main="true">
+                <span><![CDATA[Europe]]></span>
+                <target wiki-id="9239"><![CDATA[http://en.wikipedia.org/wiki/Europe]]></target>
+            </annotation>
+        </query>
+    </session>
+    <session id="yahoo-213" numqueries="1">
+        <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="true" no-wp="false"
+               non-english="false" quote-question="false" starttime="1">
+            <text><![CDATA[msn.com]]></text>
+            <annotation main="false">
+                <span><![CDATA[msn.com]]></span>
+                <target wiki-id="185041"><![CDATA[http://en.wikipedia.org/wiki/MSN]]></target>
+            </annotation>
+        </query>
    </session>
 </webscope>

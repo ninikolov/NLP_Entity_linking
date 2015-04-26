@@ -115,4 +115,4 @@ def print_F1(parser):
                                                             round(precision_s, 4), round(recall_s, 4), TermColor.BOLD,
                                                             round(f1_s, 4), TermColor.END))
     print("*" * 60)
-    return f1_l
+    return f1_s
