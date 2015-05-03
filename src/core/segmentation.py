@@ -2,7 +2,6 @@
 Functions used to perform segmentation on the queries
 """
 from itertools import islice
-import itertools
 import marshal
 
 from inflection import pluralize, singularize
@@ -151,6 +150,34 @@ def get_entities(cursor, target):
     return cursor.fetchone()
 
 
+import itertools
+from copy import deepcopy
+
+
+def slice_by_lengths(lengths, the_list):
+    for length in lengths:
+        new = []
+        for i in range(length):
+            new.append(the_list.pop(0))
+        yield new
+
+
+def subgrups(my_list):
+    for each_tuple in partition(len(my_list)):
+        yield list(slice_by_lengths(each_tuple, deepcopy(my_list)))
+
+
+def partition(number):
+    return {(x,) + y for x in range(1, number) for y in partition(number - x)} | {(number,)}
+
+
+def word_combinations(query):
+    combinations = []
+    words = query.split()
+    for group in subgrups(words):
+        combinations.append([" ".join(group[i]) for i in range(len(group))])
+    return combinations
+
 def search_entities(search_query, db_conn, take_largest=True):
     """
     New version to build upon the baseline
@@ -163,7 +190,7 @@ def search_entities(search_query, db_conn, take_largest=True):
     # print("entity_search", search_query.search_string)
 
     c = db_conn.cursor()
-    for i in range(3, 0, -1):  # Try combinations with up to 3 words
+    for i in range(len(search_query.array), 0, -1):  # Try combinations with up to 3 words
         pos = -1  # position of the words in the string
         for query_term in window(search_query.array, n=i):
             pos += 1  # windows is moved to the right

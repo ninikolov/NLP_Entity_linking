@@ -4,13 +4,13 @@ import sqlite3
 import marshal
 import csv
 import re
-import pdb
 from urllib.request import unquote
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, CData
 import inflection
 
-from .query import SearchQuery, SearchMatch, Entity,SearchSession
+from .query import SearchQuery, SearchMatch, Entity, SearchSession
+
 
 
 
@@ -84,9 +84,9 @@ class QueryParser():
                 query_str = query_str.replace('"', "")
                 # if FIX_STRING:
                 # new_query = fix_string(query_str, convert=False)
-                #     # print("Changed query from", query_str, "to", new_query)
+                # # print("Changed query from", query_str, "to", new_query)
                 #     query_str = new_query
-                new_query = SearchQuery(query_str,search_session)
+                new_query = SearchQuery(query_str, search_session)
                 search_session.append(new_query)
                 for ann in query.find_all("annotation"):
                     try:
@@ -119,6 +119,74 @@ class QueryParser():
                         # print("LINK: " + e.link)
                 if new_query:
                     self.query_array.append(new_query)
+
+
+class QueryOutput():
+    """
+    Generate XML file from annotation results.
+    """
+
+    def __init__(self, target_file):
+        self.target_file = target_file
+        self.soup = BeautifulSoup(features='xml')
+        self.webscope = self.soup.new_tag("webscope")
+
+    def write_session(self, name):
+        return self.soup.new_tag("session", id=name)
+
+    def cdata(self, text):
+        return CData(str(text))
+
+    def write_match(self, match):
+        """
+        Generate the <annotation> tag
+        """
+        match_xml = self.soup.new_tag("annotation")
+        span = self.soup.new_tag("span")
+        span.append(self.cdata(match.substring))
+        entity = match.get_chosen_entity()
+        match_xml.append(span)
+        if entity:
+            target = self.soup.new_tag("target")
+            target.append(self.cdata(wiki_base + entity.link))
+            match_xml.append(target)
+        return match_xml
+
+    def write_query(self, query):
+        """
+        Generate the <query> tag
+        """
+        s_tag = self.soup.find(id=query.session.session_id)
+        if not s_tag:
+            s_tag = self.write_session(name=query.session.session_id)
+            starttime = "1"
+        else:
+            queries = s_tag.find_all("query")
+            if not queries:
+                starttime = "1"
+            else:
+                starttime = 1
+                for q in queries:
+                    if int(q["starttime"]) > starttime:
+                        starttime = int(q["starttime"])
+                starttime = str(starttime + 1)
+        query_xml = self.soup.new_tag("query", starttime=starttime)
+        text = self.soup.new_tag("text")
+        text.append(self.cdata(query.search_string))
+        query_xml.append(text)
+        for match in query.search_matches:
+            query_xml.append(self.write_match(match))
+        s_tag.append(query_xml)
+        self.webscope.append(s_tag)
+
+    def commit(self):
+        """
+        Save file to disk.
+        """
+        self.soup.append(self.webscope)
+        with open(self.target_file, "wb") as file:
+            file.write(self.soup.prettify("utf-8"))
+            file.close()
 
 
 def load_dict(file_path, fix=False):

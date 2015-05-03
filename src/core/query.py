@@ -106,8 +106,12 @@ class SearchQuery(object):
                         #the xml is incomplete (check dev-set "New York American Girl dolls cost"). TODO : Look into that.
                     if match.position == word_pointer:
                         #we check the starting position of the match.
-                        #followed by an assert : check if the words (not ony position) coincide 
-                        assert (match.substring.split()[0] == self.array[word_pointer])
+                        # followed by an assert : check if the words (not ony position) coincide
+                        try:
+                            assert (match.substring.split()[0] == self.array[word_pointer])
+                        except AssertionError:
+                            print(match.substring.split()[0], "|", self.array[word_pointer])
+                            # raise  AssertionError
                         visu[index_ssv] += "{0}{1}{2} ".format(
                             colors[match.rating], match.substring, TermColor.END)
                         word_pointer += match.word_count
@@ -264,3 +268,4 @@ class Entity(object):
 
     def __repr__(self):
         return "<Entity: %s %f>" % (self.link, self.probability)
+

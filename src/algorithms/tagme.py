@@ -10,7 +10,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.tagme_wrapper import *
-from core.xml_parser import load_dict, QueryParser
+from core.xml_parser import load_dict, QueryParser, QueryOutput
 
 from core.segmentation import search_entities
 from core.score import evaluate_score, print_F1
@@ -48,6 +48,7 @@ EPSILON = 0.1
 DEBUG = False
 COUNTER = 0
 ALL_ENTITIES = 0
+
 
 
 def rel(target_entity, other_entities):
@@ -189,22 +190,76 @@ def prune(query, theta=THETA):
         else:
             query.search_matches[index].chosen_entity = -1
             # if DEBUG:
-            print("\t\t\tPruning entity ", chosen_entities[index], "Coherence:", coh)
+            # print("\t\t\tPruning entity ", chosen_entities[index], "Coherence:", coh)
     if no_of_entities == 0:
         total_coh = 0.
     else:
-        total_coh /= no_of_entities
-    print("Total coherence of this query:", total_coh)
-    return final_selection
+        total_coh *= no_of_entities
+    # print("Total coherence of this query:", total_coh)
+    return final_selection, total_coh
 
+
+from inflection import pluralize, singularize
+
+from core.query import Entity, SearchMatch
+from core.nltk.nltk_functions import hard_fix, soft_fix
+from core.segmentation import get_entities, word_combinations
+import marshal
+
+
+def search_entities2(search_query, db_conn, segmentation, matches={}):
+    """
+    New version to build upon the baseline
+    :param search_string:
+    :param db_conn:
+    :return:
+    """
+    # search_query = SearchQuery(search_string)
+    # print(search_query, "\n", search_query.true_entities, "\n \n" )
+    # print("entity_search", search_query.search_string)
+
+
+    pos = -1  # position of the words in the string
+    for query_term in segmentation:
+        word_count = len(query_term.split())
+        pos += 1  # windows is moved to the right
+        if query_term in matches:  # reuse
+            matches[query_term].chosen_entity = 0
+            matches[query_term].position = pos
+            search_query.add_match(matches[query_term])
+            continue
+        # print("qt", query_term, pos)
+        # methods to apply to try to find something that works
+        # TODO: Figure out smarter ways to use these
+        operations = [singularize, pluralize, soft_fix, hard_fix]
+        result = get_entities(db_conn, query_term)
+        while not result and operations:  # apply operations in order until there's results
+            fixed = operations[0](query_term)
+            result = get_entities(db_conn, fixed)
+            if operations[0] == hard_fix and result and fixed != query_term:
+                print("Fixed", query_term, "to", fixed)
+            del operations[0]
+        if not result and not operations:
+            continue
+        entities = [Entity(d[0], d[1]) for d in marshal.loads(result[1])]
+        if not entities:
+            continue
+        # Create a match with all entities found
+        new_match = SearchMatch(pos, word_count, entities, query_term)
+        new_match.chosen_entity = 0
+        matches[query_term] = new_match
+        search_query.add_match(new_match)
+    return matches
 
 def run():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
+    writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-tagme."))
     db_conn = load_dict(DATA_DIR + DICT, fix=False)
     exporter = Export()
     for query in parser.query_array:
         query.spell_check()
         entities = search_entities(query, db_conn, take_largest=True)
+        print("sesh", query.session)
         if DEBUG:
             print("Search matches: ", query.search_matches)
         for index in range(len(query.search_matches)):  # for each match
@@ -222,6 +277,58 @@ def run():
         evaluate_score(query, parser, use_chosen_entity=True)
         query.visualize()
         query.add_to_export(exporter)
+        writer.write_query(query)
+    exporter.export()
+    writer.commit()
+
+    # evaluate solution
+    print("Tagme results with parameters ENTITIES_LIMIT=", ENTITIES_LIMIT, "PROB_LIMIT=", PROB_LIMIT, "THETA=", THETA,
+          "EPSILON=", EPSILON, ".")
+    print("Times we chose voted entity:", COUNTER, "out of", len(parser.query_array), "queries.")
+    return print_F1(parser)
+
+
+def brute_force():
+    parser = QueryParser(DATA_DIR + TRAIN_XML)
+    writer = QueryWriter("a")
+    db_conn = load_dict(DATA_DIR + DICT, fix=False)
+    exporter = Export()
+    c = db_conn.cursor()
+    for query in parser.query_array:
+        query.spell_check()
+        all_segmentations = word_combinations(query.search_string)
+        scores = []
+        query_matches = []
+        match_dict = {}
+        for segmentation in all_segmentations:
+            # print(segmentation)
+            matches = search_entities2(query, c, segmentation, match_dict)
+            for index in range(len(query.search_matches)):  # for each match
+                choose_entity(query.search_matches[index], query.search_matches, index)
+            final, total_coh = prune(query)
+            scores.append(total_coh / len(segmentation))
+            query_matches.append(list(query.search_matches))
+            match_dict.update(matches)
+            query.search_matches = []
+        print(scores)
+        best_segmentation = np.argmax(scores)
+        print("final segmentation:", all_segmentations[best_segmentation])
+        query.search_matches = query_matches[best_segmentation]
+        print(query.get_chosen_entities())
+        if DEBUG:
+            print("Search matches: ", query.search_matches)
+            print("Final entities after pruning: ", final)
+        for match in query.search_matches:
+            try:
+                match.get_chosen_entity().validate()
+            except:
+                continue
+        for true_match in query.true_entities:
+            true_match.get_chosen_entity().validate()
+        evaluate_score(query, parser, use_chosen_entity=True)
+        query.visualize()
+        query.add_to_export(exporter)
+        writer.write_query(query)
     exporter.export()
 
     # evaluate solution
@@ -237,5 +344,6 @@ if __name__ == '__main__':
     # THETA = e
     #     f1s[e] = run()
     # print(f1s)
+    # brute_force()
     run()
 
