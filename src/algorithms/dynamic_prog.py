@@ -241,18 +241,19 @@ def prune(query):
 
 def get_session_info(query):
     """
-    Get session: basically all entities maped so far
+    Get the following data out of the sessions: 
+    - basically all entities maped so far in the session stored in session_entity_linked
+    - stores also the sting difference between the last two queries in the array of strings diff_session_query 
     """
     current_session_id=query.session.session_id
     #need global keyword to modify global var
     global last_session_id
     global session_entity_linked
-    if(last_session_id is None):
-        last_session_id=current_session_id
-        actual_entity_linked = query.get_chosen_entities()
-        for i in range(len(actual_entity_linked)):
-            session_entity_linked.append(actual_entity_linked[i].link)
-        return
+    global last_query_text
+    global diff_session_query
+    
+        
+    #case same session as last one
     if (last_session_id == current_session_id):
         actual_entity_linked = query.get_chosen_entities()
         for i in range(len(actual_entity_linked)):
@@ -263,25 +264,48 @@ def get_session_info(query):
                     is_duplicate=True
                     break
             if ( not is_duplicate): session_entity_linked.append(actual_entity_linked[i].link)
+        
+        
+        #diff between last two queries (only added ones to last query),  but beware spellings matters since simple string comparison!
+        diff_session_query=[]
+        for i in range(len(query.array)):
+            new_word=True
+            for j in range(len(last_query_text)):
+                if (last_query_text[j] == query.array[i]):
+                    new_word=False
+                    break
+            if(new_word):
+                diff_session_query.append(query.array[i])
+        
+        last_query_text=query.array
         return
+    
+    
+    #case different session or first one
     else:
         last_session_id=current_session_id
         #empty list
-           
         session_entity_linked=[]
         actual_entity_linked = query.get_chosen_entities()
         for i in range(len(actual_entity_linked)):
             session_entity_linked.append(actual_entity_linked[i].link)
+        
+        
+        #for diff
+        last_query_text=query.array
+        diff_session_query=[]
         return
         
+
 if __name__ == '__main__':
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
     
-    #use for session info
+    #initlialize data for session info
     last_session_id=None
-    #keep track of all matched entity for the session so far
     session_entity_linked=[]
+    last_query_text=[]
+    diff_session_query=[]
 
     for query in parser.query_array:
         entities = search_entities(query, db_conn)
