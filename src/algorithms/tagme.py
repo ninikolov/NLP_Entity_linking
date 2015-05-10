@@ -19,16 +19,11 @@ from core.export import Export
 import numpy as np
 
 
-def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
                     default="query-data-dev-set.xml")
 
 args = parser.parse_args()
-
 
 THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
@@ -48,7 +43,6 @@ EPSILON = 0.1
 DEBUG = False
 COUNTER = 0
 ALL_ENTITIES = 0
-
 
 
 def rel(target_entity, other_entities):
@@ -112,16 +106,20 @@ def choose_entity(target_match, matches, match_index, limit=ENTITIES_LIMIT):
         # print("Tagme didn't find anything for ", target_match.substring)
         return
     # winner_entity = np.argmax(entity_votes)
+    # print(entity_votes)
     winner_entity = choose_best_epsilon(other_entitites, entity_votes)
     if DEBUG:
         print("Tagme chooses", target_match.entities[winner_entity], "for match", target_match.substring,
-              " | vote", entity_votes[winner_entity], " | errors", total_errors, " | total size", total_size)
+              " | vote", entity_votes[winner_entity], " | errors", total_errors, " | total size", total_size,
+              " | other:", other_entitites[:3])
         # print([(other_entitites[i].link, "V=" + str(entity_votes[i])) for i in range(len(other_entitites[0:10]))])
     target_match.chosen_entity = winner_entity
 
 
-def choose_best_epsilon(entities, votes, epsilon=EPSILON):
-    global COUNTER
+def choose_best_epsilon(entities, votes, epsilon=None):
+    global COUNTER, EPSILON
+    if not epsilon:
+        epsilon = EPSILON
     top = 0.
     top_ind = -1
     for i in range(len(votes)):
@@ -168,16 +166,20 @@ def check_coherence(entity_index, other_entities):
     coh = vote / (len(other_entities) - 1)
     coh += other_entities[entity_index].probability / 2
     if DEBUG:
+        pass
         print("\t\tCoherence of ", other_entities[entity_index].link, ": ", coh)
     return coh
 
 
-def prune(query, theta=THETA):
+def prune(query, theta=None):
     """
     Remove entities that aren't coherent with the overall meaning.
     :param query:
     :return:
     """
+    global THETA
+    if not theta:
+        theta = THETA
     chosen_entities = query.get_chosen_entities()
     final_selection = []
     no_of_entities = len(chosen_entities)
@@ -251,6 +253,7 @@ def search_entities2(search_query, db_conn, segmentation, matches={}):
         search_query.add_match(new_match)
     return matches
 
+
 def run():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-tagme."))
@@ -259,14 +262,15 @@ def run():
     for query in parser.query_array:
         query.spell_check()
         entities = search_entities(query, db_conn, take_largest=True)
-        print("sesh", query.session)
         if DEBUG:
-            print("Search matches: ", query.search_matches)
+            pass
+            # print("Search matches: ", query.search_matches)
         for index in range(len(query.search_matches)):  # for each match
             choose_entity(query.search_matches[index], query.search_matches, index)
         final = prune(query)
         if DEBUG:
-            print("Final entities after pruning: ", final)
+            pass
+            # print("Final entities after pruning: ", final)
         for match in query.search_matches:
             try:
                 match.get_chosen_entity().validate()
@@ -290,7 +294,7 @@ def run():
 
 def brute_force():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
-    writer = QueryWriter("a")
+    # writer = QueryWriter("a")
     db_conn = load_dict(DATA_DIR + DICT, fix=False)
     exporter = Export()
     c = db_conn.cursor()
@@ -328,7 +332,7 @@ def brute_force():
         evaluate_score(query, parser, use_chosen_entity=True)
         query.visualize()
         query.add_to_export(exporter)
-        writer.write_query(query)
+        # writer.write_query(query)
     exporter.export()
 
     # evaluate solution
@@ -339,10 +343,16 @@ def brute_force():
 
 
 if __name__ == '__main__':
+    # global THETA, EPSILON
     # f1s = {}
-    # for e in [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]:
-    # THETA = e
-    #     f1s[e] = run()
+    # epsilons = [0.1, 0.2, 0.3]
+    # thetas = [0.2, 0.3, 0.4]
+    # for t in thetas:
+    # THETA = t
+    #     for e in epsilons:
+    #         EPSILON = e
+    #         f1s["Theta: " + str(t) + " Epsilon:" + str(e)] = run()
+    #         print(THETA, EPSILON)
     # print(f1s)
     # brute_force()
     run()

@@ -11,9 +11,6 @@ import inflection
 
 from .query import SearchQuery, SearchMatch, Entity, SearchSession
 
-
-
-
 # XML Document documentation
 # session -> mult. query
 
@@ -38,10 +35,6 @@ def parse_xml(file_path):
         soup = BeautifulSoup(f, ["lxml", "xml"])
         assert isinstance(soup, BeautifulSoup)
         return soup
-
-
-def singularize_query(text):
-    return " ".join([inflection.singularize(a) for a in text.split()])
 
 
 class QueryParser():
@@ -82,41 +75,28 @@ class QueryParser():
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
                 query_str = query_str.replace('"', "")
-                # if FIX_STRING:
-                # new_query = fix_string(query_str, convert=False)
-                # # print("Changed query from", query_str, "to", new_query)
-                #     query_str = new_query
                 new_query = SearchQuery(query_str, search_session)
                 search_session.append(new_query)
                 for ann in query.find_all("annotation"):
                     try:
                         entity_str = extract_entity_name(ann.find_all("target")[0].text)
-                        # print("ent str", entity_str)
                         entity = Entity(entity_str, 1)
-                    except IndexError:  # No true_entitiesntity here
+                    except IndexError:  # No true_entities here
                         continue
                     try:
                         match_str = unquote(ann.find_all("span")[0].text)
                         match_str = match_str.replace('"', "")
-                        # print("match:", match_str)
-                        # if FIX_STRING:
-                        # match_str = fix_string(match_str, convert=False)
-                        # print("match:", match_str)
                         # find the amount of word separators in the string before the occurence of span
-                        # print(new_query.search_string, "=>", span)
                         str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
                                               re.IGNORECASE)
-                        # print("str before", str_before)
                         position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
                         assert (isinstance(position, int))
                         new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
                     except Exception as e:
-                        # raise e
                         print("Couldn't add \"%s\", there was some issue" % query_str)
                         new_query = None
-                        # print("LINK: " + e.link)
                 if new_query:
                     self.query_array.append(new_query)
 
@@ -263,9 +243,3 @@ def load_wiki_names(file_path):
         print("Database already exists, cool!")
 
     return conn
-
-
-def fix_entity(entity):
-    assert isinstance(entity, str)
-    entity = entity[0].upper() + entity[1:]
-    return entity

@@ -9,7 +9,6 @@ def evaluate_score(query, parser, use_chosen_entity=False):
     :param parser: we need the parser just to increment the total tp/fp/fn values
     :return: assign the correct rating to the query & the entities
     """
-
     set_entities_matched = []
     for match in query.search_matches:
 

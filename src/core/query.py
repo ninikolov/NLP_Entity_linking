@@ -70,7 +70,7 @@ class SearchQuery(object):
 
     # def choose_best_entities(self):
     # """
-    #     TODO: Figure out a better way to do this
+    # TODO: Figure out a better way to do this
     #     """
     #     best_entities = {}
     #     for match in self.search_matches:
@@ -92,7 +92,6 @@ class SearchQuery(object):
         index_ssv = 0  #index search string vizualization
 
         search_matches_copy = list(self.search_matches)
-
         while len(search_matches_copy) > 0:
             word_pointer = 0
             visu.append("")
@@ -229,7 +228,7 @@ class SearchMatch(object):
         # def choose_best_match(self):
         # """
         # """
-        #     return self.substring, self.entities[0]
+        # return self.substring, self.entities[0]
 
 
 entity_correction_mapper = {}

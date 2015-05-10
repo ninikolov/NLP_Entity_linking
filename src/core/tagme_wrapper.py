@@ -1,9 +1,10 @@
 """
-TAGME Wrapper
+Wrapper for the TAGME API http://tagme.di.unipi.it
 """
 
 BASE_URL_SCORE = "http://tagme.di.unipi.it/rel?key=tagme-NLP-ETH-2015&lang=en&tt="
 url = "http://tagme.di.unipi.it/rel"
+tag_url = "http://tagme.di.unipi.it/tag"
 wiki_synonyms_url = "http://wikisynonyms.ipeirotis.com/api/"
 
 import json
@@ -11,13 +12,13 @@ import os
 import sys
 
 import requests
+from core.query import SearchQuery, SearchMatch, Entity
 
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.query import Entity
 import requests_cache
-import urllib
 
 requests_cache.install_cache('../../data/tagme-cache')
 
@@ -36,7 +37,6 @@ def similarity_score(entity1, entity2):
     try:
         score = data['result'][0]['rel']
     except KeyError:
-#        print("Error in syntax of API request - ", request.url)
         score = 0.
     return float(score)
 
@@ -90,29 +90,48 @@ def similarity_score_batch(target_entity, entities, ignore_missing=False):
     return scores
 
 
-def check_synonym(entity):
+def position(query, start_ch):
     """
-    check out http://wikisynonyms.ipeirotis.com/api/ for more info
-    :param entity:
+    Calculate position of word
+    :param query:
+    :param start_ch:
+    :param end_ch:
     :return:
     """
-    try:
-        request = requests.get(wiki_synonyms_url + urllib.request.quote(entity))
-        data = json.loads(request.text)
-        if data['message'].startswith("Multiple"):
-            return check_synonym(data['terms'][0]['term'])
-        elif data['message'] == 'success':
-            term = data['terms'][0]
-            print(term)
-            if term['canonical'] == 1:
-                return term['term'].replace(" ", "_")
-    except Exception:
-        print("Error in syntax of API request - ", entity)
-        return entity
+    q_array = query.split()
+    curr = 0
+    start = -1
+    for word in range(len(q_array)):
+        for letter in range(len(q_array[word])):
+            if letter + curr < start_ch:
+                continue
+            else:
+                start = word
+        curr += len(q_array[word]) + 1
+    assert start >= 0
+    return start
+
+def tag(query):
+    """
+    Used for the second baseline. Tag query using the TAGME API.
+    :param query_str:
+    :return:
+    """
+    params = {'key': 'tagme-NLP-ETH-2015', 'lang': 'en', 'text': query.search_string}
+    request = requests.get(tag_url, params=params)
+    data = json.loads(request.text)
+    for ann in data['annotations']:
+        pos = position(query.search_string, ann['start'])
+        e = ann['title'].replace(" ", "_")
+        match = SearchMatch(pos, len(ann['spot'].split()), [Entity(e, 1.)], ann['spot'])
+        match.chosen_entity = 0
+        query.add_match(match)
 
 if __name__ == '__main__':
     # print(similarity_score(Entity("Carlyle,_Illinois", 0.), Entity("Dam_(disambiguation)", 0.)))
     # print(similarity_score(Entity("Broadcasting", 0.), Entity("Anchor_&_Braille", 0.)))
     # print(similarity_score("Justin_Bieber", "Metallica"))
     # print(similarity_score("Zurich", "Coca-Cola"))
-    print(check_synonym("Nicki_Minaj"))
+    # print(check_synonym("Nicki_Minaj"))
+    tag("eth zurich")
+    # print(position("eth zurich", 5, 8))
