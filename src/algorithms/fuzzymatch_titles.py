@@ -101,6 +101,7 @@ def score(elems, matches):
     match_elems = [match[1].replace('_', ' ').lower().split() for match in matches]
     potential_max_score = len(elem_string)
     # print(match_elems)
+    chosen_idx = None
     max_psql_score = matches[0][2] # sorted by score
     for idx, match in enumerate(match_elems):
         curr_match = matches[idx]
@@ -109,7 +110,7 @@ def score(elems, matches):
         match_score = 0
         if curr_match_psql_score < 0.9 * max_psql_score:
             break
-        prev_match_idx = -1
+        prev_match_idx = -2
         for elem_idx, elem in enumerate(elems):
 
             while len(elem):
@@ -117,7 +118,8 @@ def score(elems, matches):
                 # print(temp_score, match)
 
                 if temp_score > 0:
-                    streak = 1 if prev_match_idx == idx - 1 else 0
+                    streak = 1 if prev_match_idx == elem_idx - 1 else 0
+                    prev_match_idx = elem_idx
                     if streak:
                         print("STREACK")
                     match_score += temp_score + streak + 1 # add plus one for amount of matched substrings
@@ -129,8 +131,8 @@ def score(elems, matches):
         # if len(curr_match_string) > len(elem_string):
         #     match_score /= (abs(potential_max_score - (len(curr_match_string))) / potential_max_score)
         # match_score = curr_match[2]
-        prev_match_length = len(curr_match_string)
-        if match_score > prev_match_score or (prev_match_length > len(match) and match_score == prev_match_score):
+        if match_score > prev_match_score or (prev_match_length > len(curr_match_string) and match_score == prev_match_score):
+            prev_match_length = len(curr_match_string)
             if len(curr_match_string) > len(elem_string) + 8:
                 # dont add
                 pass
@@ -139,9 +141,10 @@ def score(elems, matches):
                 pprint(match_elems[idx])
                 pprint(elems)
                 chosen = matches[idx]
+                chosen_idx = idx
                 prev_match_score = match_score
-    print(chosen, match_score)
-    return (chosen, match_score)
+
+    return (matches[chosen_idx], match_score)
 
 
 def check_if_abbreviation(word):
@@ -164,13 +167,23 @@ def check_if_abbreviation(word):
 def get_match_or_redirect(el):
     cur2 = conn.cursor()
 
-    if el:
+    if type(el) == list or type(el) == tuple:
+        print("GETTING A MATCH .. .", el)
         res = el[1]
-        if el[2] == 1:
-            cur2.execute("""select redirect.rd_title from redirect where rd_from == %s""", (el[0], 0))
-            rd = cur2.fetchone()
-            res = cur2[0]
+        cur2.execute("""select redirect.rd_title from redirect where rd_from = %s""", (el[0], ))
+        rd = cur2.fetchone()
+        if rd:
+            res = rd[0]
+            print(rd)
         return res
+    elif type(el) == str:
+        cur2.execute("""select redirect.rd_title from redirect where rd_from = %s""", (el, ))
+        rd = cur2.fetchone()
+        print(rd)
+        if rd:
+            return cur2[0]
+        else:
+            return el
     else:
         return None
 
@@ -183,7 +196,7 @@ def match_levenshtein(exec_query):
     query_string_fast = cur.mogrify("""select page.page_id,  page.page_title, redirect.rd_title
         from page
         left outer join redirect on redirect.rd_from = page.page_id
-        where lower(%s) = lower(page_title)
+        where lower(%s) = lower(page.page_title_with_spaces)
     """, (exec_query, )
     )
     el = postgres_cached(query_string_fast, ps.FETCHONE)
