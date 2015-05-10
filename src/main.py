@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+First baseline
+"""
 
 import os
 import argparse
@@ -33,24 +36,15 @@ ENTITY_CHECKER_MAP = "entity_map"
 def main():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
-
-    # names_conn = load_wiki_names(DATA_DIR + WIKI_NAMES)
-    # try:
-    #     with open(DATA_DIR + ENTITY_CHECKER_MAP, "rb") as f_entity_correction_mapper: 
-    #         core.query.entity_correction_mapper = marshal.load(f_entity_correction_mapper)
-    # except: 
-    #     print("No entity mapping cache...")
-
     exporter = Export()
-
-    for q in parser.query_array:
-        entities = search_entities(q, db_conn)
-        q.spell_check()
-        for true_match in q.true_entities:
+    for query in parser.query_array:
+        entities = search_entities(query, db_conn)
+        query.spell_check()
+        for true_match in query.true_entities:
             true_match.get_chosen_entity().validate()
-        evaluate_score(q, parser)
-        q.visualize()
-        q.add_to_export(exporter)
+        evaluate_score(query, parser)
+        query.visualize()
+        query.add_to_export(exporter)
 
     exporter.export()
     print_F1(parser)
