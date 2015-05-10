@@ -162,13 +162,12 @@ def slice_by_lengths(lengths, the_list):
         yield new
 
 
+def partition(number):
+    return {(x,) + y for x in range(1, number) for y in partition(number - x)} | {(number,)}
+
 def subgrups(my_list):
     for each_tuple in partition(len(my_list)):
         yield list(slice_by_lengths(each_tuple, deepcopy(my_list)))
-
-
-def partition(number):
-    return {(x,) + y for x in range(1, number) for y in partition(number - x)} | {(number,)}
 
 
 def word_combinations(query):
