@@ -5,10 +5,13 @@ from itertools import islice
 import marshal
 
 from inflection import pluralize, singularize
+from collections import defaultdict
+from operator import itemgetter
 
 from core.query import Entity, SearchMatch
-from core.nltk.nltk_functions import hard_fix, soft_fix
+from core.nltk.nltk_functions import hard_fix, soft_fix, chunk, get_array
 
+import nltk
 
 def window(seq, n=3):
     """
@@ -153,7 +156,6 @@ def get_entities(cursor, target):
 import itertools
 from copy import deepcopy
 
-
 def slice_by_lengths(lengths, the_list):
     for length in lengths:
         new = []
@@ -161,15 +163,12 @@ def slice_by_lengths(lengths, the_list):
             new.append(the_list.pop(0))
         yield new
 
-
 def subgrups(my_list):
     for each_tuple in partition(len(my_list)):
         yield list(slice_by_lengths(each_tuple, deepcopy(my_list)))
 
-
 def partition(number):
     return {(x,) + y for x in range(1, number) for y in partition(number - x)} | {(number,)}
-
 
 def word_combinations(query):
     combinations = []
@@ -221,3 +220,48 @@ def search_entities(search_query, db_conn, take_largest=True):
                         continue
                 new_match.chosen_entity = 0
                 search_query.add_match(new_match)
+
+def segmenter(array):
+
+    #tokenized = nltk.word_tokenize(text)
+    tagged = nltk.pos_tag(array)
+    s = chunk(tagged)
+    print("-------")
+    print(tagged)
+
+    for c in s:
+        for word in c:
+            print (word)
+
+def count_prepositions(array):
+    tagged = nltk.pos_tag(array)
+
+def segment_score(search_match):
+
+    score = [0,0]
+    weights = [0.5, 0.5]
+    score[0] = search_match.word_count
+    score[1] = len(search_match.entities)
+    score[2] = homogeneity(search_match.array)
+
+    return [a*b for a,b in zip(weights,score)]
+
+def homogeneity(array):
+
+    """
+    Returns a score based on how many different 
+    types of words are in the string (ADJ, NOUN, etc)
+    One type returns a score s=1, 2 types s=0.5, 3 types s=0.
+    """
+    #array = nltk.word_tokenize(string)
+    tagged = nltk.pos_tag(array)
+
+    counts = defaultdict(int)
+    for (word, tag) in tagged:
+        counts[tag] += 1
+    print(tagged)
+    print(sorted(counts.items(), key=itemgetter(1), reverse=True))
+    return(max(1.5-len(counts.items())/2, 0))
+
+
+

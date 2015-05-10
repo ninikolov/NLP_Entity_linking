@@ -6,7 +6,7 @@ import inflection
 from nltk.corpus import wordnet as wn
 
 
-nltk.data.path.append("../lib/nltk_data")
+nltk.data.path.append("../../../data/nltk_data")
 
 def tag(text):
     tokenized = nltk.word_tokenize(text)
@@ -92,18 +92,28 @@ def chunk(text):
 
     grammar = "NP: {<DT>?<JJ>*<NN>}"
     grammar = """ NP: 
-        {<.*>+}
-        }<DT|JJ>+{ 
+        {<JJ>*<NP|NN|NNP><NP|NN|NNP><NP|NN|NNP>}
+        }<IN|DT>+{ 
         """
 
     cp = nltk.RegexpParser(grammar)
-    #result = cp.parse(text)
+    result = cp.parse(text)
 
-    result = nltk.ne_chunk(text)
+    #result = nltk.ne_chunk(text)
 
-    #print(result)
-    result.draw()
+    return result
+    #result.draw()
 
+def get_array(var):
+    """get an array of words from a chunk  """
+    array = []
+    if(type(var) is nltk.tree.Tree):
+        for (word, tag) in var:
+            array.append(word)
+    elif (type(var) is tuple):
+        assert(len(var)==2)
+        array.append(var[0])
+    return(array)
 
 if __name__ == '__main__':
     # s = "types    of  gun used in  violent events"

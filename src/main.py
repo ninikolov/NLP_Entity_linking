@@ -12,7 +12,8 @@ from core.xml_parser import QueryParser, load_dict
 from core.score import evaluate_score, print_F1
 import core.query
 from core.export import Export
-from baseline.baseline import search_entities
+#from baseline.baseline import search_entities
+from core.segmentation import search_entities
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",

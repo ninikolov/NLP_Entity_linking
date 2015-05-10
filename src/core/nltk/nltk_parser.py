@@ -3,16 +3,22 @@
 import os
 import argparse
 import marshal
-import sys
+import sys, inspect
 
 sys.path.append("./lib/odswriter/")
+#sys.path.insert(1, '././core')
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
-from src.baseline import baseline
-from core.xml_parser import QueryParser, load_dict
-from core.score import evaluate_score, print_F1
-import core.query
-from core.export import Export
-from core.nltk.nltk_functions import chunk
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+
+import xml_parser
+
+#from core.xml_parser import QueryParser, load_dict
+#from ... import xml_parser
+import query
+from nltk.nltk_functions import chunk
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
@@ -41,7 +47,7 @@ def nltk_parser():
     # except: 
     #     print("No entity mapping cache...")
 
-    exporter = Export()
+    #exporter = Export()
 
     for q in parser.query_array:
         print(chunk(q.search_array))
