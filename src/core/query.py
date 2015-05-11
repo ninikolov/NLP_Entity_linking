@@ -82,8 +82,8 @@ class SearchQuery(object):
         #the string more than once so that all the matches can be seen.
         visu = [] #search string visalization
         index_ssv = 0 #index search string vizualization
-        
-        search_matches_copy = list(self.search_matches) 
+
+        search_matches_copy = list(self.search_matches)
 
         while len(search_matches_copy)>0:
             word_pointer = 0
@@ -116,14 +116,14 @@ class SearchQuery(object):
             #not be empty here so it will go through the while loop again. 
             index_ssv += 1
 
-        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD, 
+        print("{:=^80}\nQuery: {:}{:}{:}\n".format("", TermColor.BOLD,
             self.search_string, TermColor.END, ""))
         print (" |&| ".join(visu))
         for match in self.search_matches:
             if match.get_chosen_entity():
                 print("{0}{1:<25} | {2}{3}".format(colors[match.rating],
                                                    match.substring, match.entities[0], TermColor.END))
-        
+
         first=True
         for true_match in self.true_entities:
             if (not true_match.rating in ("TP-strict", "TP-relaxed")):
@@ -160,6 +160,8 @@ class SearchQuery(object):
                 }
 
         exporter.append_row(res)
+        exporter.diff()
+
         true_res = OrderedDict()
         m = list(self.true_entities)
         m.sort(key=lambda s: s.position)
@@ -182,7 +184,7 @@ class SearchMatch(object):
         self.position = position
         self.word_count = word_count
         self.entities = entities
-        self.chosen_entity = -1 # a positive number indicates array index 
+        self.chosen_entity = -1 # a positive number indicates array index
                                 # of chosen entity, -1 == no entity chosen
         self.rating = "" # "TP-strict", "TP-relaxed", "FP", "FN"
 

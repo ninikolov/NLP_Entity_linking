@@ -11,6 +11,7 @@ from baseline import baseline
 from core.xml_parser import QueryParser, load_dict, load_wiki_names
 from core.score import evaluate_score, print_F1
 import core.query
+from core.export import Export
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
@@ -22,7 +23,7 @@ THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../data/"
 TRAIN_XML = args.testfile
-DICT = "crosswikis-dict-preprocessed"
+DICT = "crosswikis-dict-preprocessed_new"
 WIKI_NAMES = "enwiki-latest-all-titles-in-ns0"
 
 ENTITY_CHECKER_MAP = "entity_map"
@@ -48,9 +49,11 @@ def main():
         for true_match in q.true_entities:
             true_match.get_chosen_entity().validate()
         evaluate_score(q, parser)
+        q.add_to_export(exporter)
         q.visualize()
 
     print_F1(parser)
+    exporter.export()
 
     f_entity_correction_mapper = open(DATA_DIR + ENTITY_CHECKER_MAP, "wb+")
     marshal.dump(core.query.entity_correction_mapper, f_entity_correction_mapper)

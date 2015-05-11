@@ -110,23 +110,19 @@ def load_dict(file_path, fix=False):
         c.execute('''CREATE TABLE entity_mapping (words TEXT, entities BLOB)''')
         with open(file_path, "r", encoding='utf-8') as csvfile:
             crosswiki = csv.reader(csvfile, delimiter="\t")
-            first_row = next(crosswiki)
-            search_word = first_row[0]
+            # first_row = next(crosswiki)
+            search_word = None
+            first = True
             contents = []
             counter = 0
-            c.execute('BEGIN TRANSACTION')
             for row in crosswiki:
                 # Loop through all the rows in the csv
                 if row[0] != search_word:
                     if contents:
                         c.execute('INSERT INTO entity_mapping VALUES(?, ?)', (search_word, marshal.dumps(contents)))
-                        counter += 1
+                        print('inserting stuff')
                     contents = []
                     search_word = row[0]
-                if counter == 30000:  # Buffer insert queries and commit them at once
-                    conn.commit()
-                    counter = 0
-                    c.execute('BEGIN TRANSACTION')
                 # Split second part of csv - different separator from \t
                 try:
                     row_ = row[1].split()
@@ -134,12 +130,15 @@ def load_dict(file_path, fix=False):
                     continue
                 prob = row_[0]
                 entity = row_[1]
-                if fix:
-                    if row[0].startswith(" ") or row[0].endswith(" "):
-                        continue
-                    entity = fix_entity(entity)
+                # if fix:
+                #     if row[0].startswith(" ") or row[0].endswith(" "):
+                #         continue
+                #     entity = fix_entity(entity)
                 # adding the entity and prob to the list as a dictionary
+                if search_word == "0":
+                    print(entity)
                 contents.append((entity, prob))
+            conn.commit()
             print("Database created")
     except sqlite3.OperationalError:
         print("Database already exists, cool!")
