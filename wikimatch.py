@@ -5,6 +5,7 @@ import pickle
 import psycopg2
 import sys
 import re
+
 # most important ideas:
 # remove instance from results (ie. remove PNC Bank Arts Center for less confusion)
 # match summaries
@@ -16,7 +17,6 @@ cur = psql.cursor()
 
 
 def wiki_cached_get(ent):
-    print(ent)
     if r.exists(ent):
         return pickle.loads(r.get(ent))
     else:
@@ -37,73 +37,62 @@ def match_disambiguation(disam_entity, other):
     ds = []
     r = wiki_cached_get(disam_entity)
     if type(r) == DisambiguationError:
-        "All is going according to planb"
-        print(r.options)
         disambiguation = str(r)
         for d in r.options:
-            wk_d = wiki_cached_get(d)
-            if type(wk_d) != DisambiguationError:
-                ds.append(wk_d)
+            ds.append(d)
 
-    e_match = wiki_cached_get(other)
-
-    curr_max_prob = 0
-    for d in ds:
-        cur.execute("select ts_rank(to_tsvector(%s), to_tsquery(%s))", (d.summary, " | ".join(other.split())))
-        res = cur.fetchone()
-        if res[0] > curr_max_prob:
-            curr_max_prob = res[0]
-            curr_new_ent = d.title
-
-        print(d.title, res)
-
-    print("The selected entity is: ", curr_new_ent)
-    return curr_new_ent.replace(' ', '_')
+    return select_best_entity(ds, other)
 
 def select_best_entity(entity_collection, other):
     other_entity = wiki_cached_get(other)
 
     possible_entities = []
     for e_str in entity_collection:
-        possible_entities.append(wiki_cached_get(e_str))
+        if not type(wiki_cached_get(e_str)) == DisambiguationError:
+            possible_entities.append(wiki_cached_get(e_str))
 
     current_res = None
     current_max_prob = 0
+
     for m in possible_entities:
+
         other_search = " | ".join(other.replace('_', ' ').split())
-        cur.execute("select ts_rank(to_tsvector(%s), to_tsquery(%s))", (m.content, other_search))
+        # print(m.summary)
+        cur.execute("select ts_rank(to_tsvector(%s), to_tsquery(%s))", (m.summary, other_search))
         res = cur.fetchone()
-
+        print(res[0], current_max_prob)
         if res[0] > current_max_prob:
-            current_res = m
-            curr_max_prob = res[0]
+            current_res = m.title
+            current_max_prob = res[0]
 
 
-    if not current_res or current_max_prob == 0:            
+    if not current_res or current_max_prob == 0:
+        # Match against content
+        current_max_prob = 0
+
         for m in possible_entities:
 
             c = other_entity.content
             c = re.sub('[^0-9a-zA-Z\s]+', '', c)
 
-            cur.execute("select ts_rank(to_tsvector(%s), to_tsquery(%s))", (m.content, " | ".join(c.split())))
+            cur.execute("select ts_rank(to_tsvector(%s), to_tsquery(%s))", (m.content, other_search))
             res = cur.fetchone()
-            if res[0] > current_max_prob:
-                current_res = m
-                curr_max_prob = res[0]
 
-    return current_res.title.replace(' ', '_')
+            if res[0] > current_max_prob:
+                current_res = m.title
+                current_max_prob = res[0]
+
+    return current_res.replace(' ', '_')
 
 
 def main():
-    queries = [{
-        "entities": ["PNC", "Online_banking"],
-        "query": "pnc online banking"
-    }]
 
     ds = []
 
-    match_disambiguation('PNC', 'online banking')
-    select_best_entity(['Green_laser', 'Viridian Green Laser Sights'], 'Glock')
+    # a = match_disambiguation('PNC', 'online banking')
+    # print(a)
+    b = select_best_entity(['Green_laser', 'Viridian Green Laser Sights'], 'Glock')
+    print(b)
 
 if __name__ == "__main__":
     main()
