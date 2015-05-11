@@ -4,28 +4,31 @@ import sqlite3
 import marshal
 import csv
 import re
+from urllib.request import unquote
 
+from bs4 import BeautifulSoup, CData
 import inflection
-from bs4 import BeautifulSoup
 
 from .query import SearchQuery, SearchMatch, Entity, SearchSession
-
-
 
 # XML Document documentation
 # session -> mult. query
 
-def get_entity_name(url):
+FIX_STRING = False
+
+wiki_base = "http://en.wikipedia.org/wiki/"
+
+
+def extract_entity_name(url):
     """
     :param url str:
     :return: entity_name
     Entity_name is the last part of the wiki url( after last /)
     """
-    entity_name = ""
-    for char_pos in range(len(url) - 1, 0, -1):
-        if ( url[char_pos] == "/"):
-            return entity_name
-        entity_name = url[char_pos] + entity_name
+    assert isinstance(url, str)
+    entity_name = url.replace(wiki_base, "")
+    return unquote(entity_name)
+
 
 def parse_xml(file_path):
     with open(file_path) as f:
@@ -34,13 +37,11 @@ def parse_xml(file_path):
         return soup
 
 
-def singularize_query(text):
-    return " ".join([inflection.singularize(a) for a in text.split()])
-
 class QueryParser():
     """
     A QueryParser stores and manages our queries.
     """
+
     def __init__(self, file_path):
         """
         :param file_path: path to xml file to be used
@@ -50,9 +51,9 @@ class QueryParser():
         self._build_queries()
 
         # true positive, flase positives and false negatives (calculated in score.py>calc_tp_fp_fn)
-        self.tp_s = self.tp_l = self.fp = self.fn = 0 
+        self.tp_s = self.tp_l = self.fp = self.fn = 0
 
-        #amount of queries and matches checked (also calculated in score.py>calc_tp_fp_fn)
+        # amount of queries and matches checked (also calculated in score.py>calc_tp_fp_fn)
         self.total_matches = 0
         self.queries_with_some_identical_true_entities = 0
 
@@ -72,31 +73,100 @@ class QueryParser():
             session_id = session["id"]
             search_session = SearchSession(session_id)
             for query in session.find_all("query"):
-                text = query.find_all("text")[0].text
-                new_query = SearchQuery(text, search_session)
+                query_str = unquote(query.find_all("text")[0].text)
+                query_str = query_str.replace('"', "")
+                new_query = SearchQuery(query_str, search_session)
                 search_session.append(new_query)
                 for ann in query.find_all("annotation"):
                     try:
-                        e = Entity(get_entity_name(ann.find_all("target")[0].text), 1)
-                    except IndexError: # No true_entitiesntity here
-                        #e = Entity("None", 0)
+                        entity_str = extract_entity_name(ann.find_all("target")[0].text)
+                        entity = Entity(entity_str, 1)
+                    except IndexError:  # No true_entities here
                         continue
                     try:
-                        span = ann.find_all("span")[0].text.replace('"', "")
+                        match_str = unquote(ann.find_all("span")[0].text)
+                        match_str = match_str.replace('"', "")
                         # find the amount of word separators in the string before the occurence of span
-                        #print(new_query.search_string, "=>", span)
-                        str_before = re.match(r"\W*(.*)%s" % span, new_query.search_string.replace('"', ""), re.IGNORECASE)
-                        pos = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
-                        assert(isinstance(pos, int))
-                        new_match = SearchMatch(pos, len(span.split()), [e], span)
+                        str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
+                                              re.IGNORECASE)
+                        position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                        assert (isinstance(position, int))
+                        new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
-                    except:
-                        print("Couldn't add \"%s\", there was some issue" % text)
+                    except Exception as e:
+                        print("Couldn't add \"%s\", there was some issue" % query_str)
                         new_query = None
-                    #print("LINK: " + e.link)
                 if new_query:
                     self.query_array.append(new_query)
+
+
+class QueryOutput():
+    """
+    Generate XML file from annotation results.
+    """
+
+    def __init__(self, target_file):
+        self.target_file = target_file
+        self.soup = BeautifulSoup(features='xml')
+        self.webscope = self.soup.new_tag("webscope")
+
+    def write_session(self, name):
+        return self.soup.new_tag("session", id=name)
+
+    def cdata(self, text):
+        return CData(str(text))
+
+    def write_match(self, match):
+        """
+        Generate the <annotation> tag
+        """
+        match_xml = self.soup.new_tag("annotation")
+        span = self.soup.new_tag("span")
+        span.append(self.cdata(match.substring))
+        entity = match.get_chosen_entity()
+        match_xml.append(span)
+        if entity:
+            target = self.soup.new_tag("target")
+            target.append(self.cdata(wiki_base + entity.link))
+            match_xml.append(target)
+        return match_xml
+
+    def write_query(self, query):
+        """
+        Generate the <query> tag
+        """
+        s_tag = self.soup.find(id=query.session.session_id)
+        if not s_tag:
+            s_tag = self.write_session(name=query.session.session_id)
+            starttime = "1"
+        else:
+            queries = s_tag.find_all("query")
+            if not queries:
+                starttime = "1"
+            else:
+                starttime = 1
+                for q in queries:
+                    if int(q["starttime"]) > starttime:
+                        starttime = int(q["starttime"])
+                starttime = str(starttime + 1)
+        query_xml = self.soup.new_tag("query", starttime=starttime)
+        text = self.soup.new_tag("text")
+        text.append(self.cdata(query.search_string))
+        query_xml.append(text)
+        for match in query.search_matches:
+            query_xml.append(self.write_match(match))
+        s_tag.append(query_xml)
+        self.webscope.append(s_tag)
+
+    def commit(self):
+        """
+        Save file to disk.
+        """
+        self.soup.append(self.webscope)
+        with open(self.target_file, "wb") as file:
+            file.write(self.soup.prettify("utf-8"))
+            file.close()
 
 
 def load_dict(file_path, fix=False):
@@ -163,7 +233,7 @@ def load_wiki_names(file_path):
             names = csv.reader(csvfile, delimiter="\t")
 
             for row in names:
-                c.execute('INSERT INTO entity VALUES(?)', (row[0], )) # , (row[0], re.sub("[^\w\s]", " ", row[0])
+                c.execute('INSERT INTO entity VALUES(?)', (row[0], ))  # , (row[0], re.sub("[^\w\s]", " ", row[0])
 
         conn.commit()
         print("Database created")
@@ -172,8 +242,3 @@ def load_wiki_names(file_path):
         print("Database already exists, cool!")
 
     return conn
-
-def fix_entity(entity):
-    assert isinstance(entity, str)
-    entity = entity[0].upper() + entity[1:]
-    return entity

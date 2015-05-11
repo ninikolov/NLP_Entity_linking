@@ -6,26 +6,22 @@ import argparse
 import os
 import sys
 
-import numpy as np
-
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.tagme_wrapper import *
-from core.xml_parser import load_dict, QueryParser
+from core.xml_parser import load_dict, QueryParser, QueryOutput
 
-from baseline.baseline import search_entities
+from core.segmentation import search_entities
 from core.score import evaluate_score, print_F1
 import math
-
-
-def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
+from core.export import Export
+import numpy as np
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-short-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
@@ -33,16 +29,29 @@ THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../../data/"
 TRAIN_XML = args.testfile
-DICT = "crosswikis-dict-preprocessed"
+DICT = "crosswikis-dict-preprocessed_new"
 # Limit how many entities we look up in the table for the voting
-ENTITIES_LIMIT = 30
+ENTITIES_LIMIT = 50
 # Tau
-PROB_LIMIT = 0.01
+PROB_LIMIT = 0.005
 # parameter for pruning
-THETA = 0.1
+THETA = 0.3
+# Minimal acceptable vote for an entity to select it
+# If nobody has vote above this we'll just take the top entity
+EPSILON = 0.1
+#
+DEBUG = False
+COUNTER = 0
+ALL_ENTITIES = 0
 
 
-def match_vote(target_entity, other_entities):
+def rel(target_entity, other_entities):
+    scores = similarity_score_batch(target_entity, other_entities, ignore_missing=True)
+    assert len(scores) == len(other_entities)
+    return np.nansum(scores)
+
+
+def match_vote(target_entity, other_entities, normalize=True):
     """
     Each entity from other_entities votes for target_entity. A normalized score is computed.
     :param target_entity:
@@ -64,8 +73,9 @@ def match_vote(target_entity, other_entities):
             errors += 1
     if new_length == 0:
         return 0., 0
-    vote_result = vote_result / new_length  # normalize
-    assert vote_result <= 1.
+    if normalize:
+        vote_result = vote_result / new_length  # normalize
+        assert vote_result <= 1.
     return vote_result, errors
 
 
@@ -86,25 +96,60 @@ def choose_entity(target_match, matches, match_index, limit=ENTITIES_LIMIT):
         for i in range(len(matches)):
             if match_index == i:  # looking at same match
                 continue
-            other_entitites = matches[i].get_entities_limit(size_limit=limit, prob_limit=PROB_LIMIT)
-            new_vote, errors = match_vote(entity, other_entitites)
-            # print("Vote ", new_vote, "for entity", entity.link, "match", matches[i].substring, " | errors:", errors)
+            match_entitites = matches[i].get_entities_limit(size_limit=limit, prob_limit=PROB_LIMIT)
+            new_vote, errors = match_vote(entity, match_entitites)
             entity_vote += new_vote
             total_errors += errors
-            total_size += len(other_entitites)
+            total_size += len(match_entitites)
         entity_votes.append(entity_vote)
-    # print("all votes: ", entity_votes)
     if not entity_votes:
         # print("Tagme didn't find anything for ", target_match.substring)
         return
-    winner_entity = np.argmax(entity_votes)
-    print("Tagme chooses", target_match.entities[winner_entity], "for match", target_match.substring,
-          " | vote", entity_votes[winner_entity], " | errors", total_errors, " | total size", total_size,
-          " | all entities", target_match.entities[0:10])
+    # winner_entity = np.argmax(entity_votes)
+    # print(entity_votes)
+    winner_entity = choose_best_epsilon(other_entitites, entity_votes)
+    if DEBUG:
+        print("Tagme chooses", target_match.entities[winner_entity], "for match", target_match.substring,
+              " | vote", entity_votes[winner_entity], " | errors", total_errors, " | total size", total_size,
+              " | other:", other_entitites[:3])
+        # print([(other_entitites[i].link, "V=" + str(entity_votes[i])) for i in range(len(other_entitites[0:10]))])
     target_match.chosen_entity = winner_entity
 
 
-def check_coherence(entity_index, other_entities, theta=THETA):
+def choose_best_epsilon(entities, votes, epsilon=None):
+    global COUNTER, EPSILON
+    if not epsilon:
+        epsilon = EPSILON
+    top = 0.
+    top_ind = -1
+    for i in range(len(votes)):
+        if votes[i] < epsilon:
+            continue
+        if entities[i].probability > top:
+            top = entities[i].probability
+            top_ind = i
+    if top_ind < 0:
+        # print("Opting for default entity")
+        return 0
+    COUNTER += 1
+    return top_ind
+
+
+def choose_best_size_limit(entities, votes, part_limit=10):
+    if len(votes) <= part_limit:
+        ind = range(len(votes))
+    else:
+        ind = np.argpartition(np.array(votes), -part_limit)[-part_limit:]
+    top = 0.
+    top_ind = -1
+    for i in ind:
+        if entities[i].probability > top:
+            top = entities[i].probability
+            top_ind = i
+    return top_ind
+
+
+def check_coherence(entity_index, other_entities):
     """
     Check the coherence of an entity - how relevant it is in the context of the other selected entities.
     :param entity_index:
@@ -113,47 +158,202 @@ def check_coherence(entity_index, other_entities, theta=THETA):
     :return:
     """
     if len(other_entities) == 1:
-        #print("No entities: ", other_entities)
+        # print("No entities: ", other_entities)
         return True
     other = list(other_entities)
     del other[entity_index]
-    vote, errors = match_vote(other_entities[entity_index], other)
+    vote = rel(other_entities[entity_index], other)
     coh = vote / (len(other_entities) - 1)
     coh += other_entities[entity_index].probability / 2
-    print("\t\tCoherence of ", other_entities[entity_index].link, ": ", coh)
-    return coh > theta
+    if DEBUG:
+        pass
+        print("\t\tCoherence of ", other_entities[entity_index].link, ": ", coh)
+    return coh
 
 
-def prune(query):
+def prune(query, theta=None):
     """
     Remove entities that aren't coherent with the overall meaning.
     :param query:
     :return:
     """
+    global THETA
+    if not theta:
+        theta = THETA
     chosen_entities = query.get_chosen_entities()
     final_selection = []
-    for index in range(len(chosen_entities)):
-        if check_coherence(index, chosen_entities):
+    no_of_entities = len(chosen_entities)
+    total_coh = 0.
+    for index in range(no_of_entities):
+        coh = check_coherence(index, chosen_entities)
+        if coh > theta:
             final_selection.append(chosen_entities[index])
+            total_coh += coh
         else:
             query.search_matches[index].chosen_entity = -1
-            print("\t\t\tPruning entity ", chosen_entities[index])
-    return final_selection
+            # if DEBUG:
+            # print("\t\t\tPruning entity ", chosen_entities[index], "Coherence:", coh)
+    if no_of_entities == 0:
+        total_coh = 0.
+    else:
+        total_coh *= no_of_entities
+    # print("Total coherence of this query:", total_coh)
+    return final_selection, total_coh
 
 
-if __name__ == '__main__':
+from inflection import pluralize, singularize
+
+from core.query import Entity, SearchMatch
+from core.nltk.nltk_functions import hard_fix, soft_fix
+from core.segmentation import get_entities, word_combinations
+import marshal
+
+
+def search_entities2(search_query, db_conn, segmentation, matches={}):
+    """
+    New version to build upon the baseline
+    :param search_string:
+    :param db_conn:
+    :return:
+    """
+    # search_query = SearchQuery(search_string)
+    # print(search_query, "\n", search_query.true_entities, "\n \n" )
+    # print("entity_search", search_query.search_string)
+
+
+    pos = -1  # position of the words in the string
+    for query_term in segmentation:
+        word_count = len(query_term.split())
+        pos += 1  # windows is moved to the right
+        if query_term in matches:  # reuse
+            matches[query_term].chosen_entity = 0
+            matches[query_term].position = pos
+            search_query.add_match(matches[query_term])
+            continue
+        # print("qt", query_term, pos)
+        # methods to apply to try to find something that works
+        # TODO: Figure out smarter ways to use these
+        operations = [singularize, pluralize, soft_fix, hard_fix]
+        result = get_entities(db_conn, query_term)
+        while not result and operations:  # apply operations in order until there's results
+            fixed = operations[0](query_term)
+            result = get_entities(db_conn, fixed)
+            if operations[0] == hard_fix and result and fixed != query_term:
+                print("Fixed", query_term, "to", fixed)
+            del operations[0]
+        if not result and not operations:
+            continue
+        entities = [Entity(d[0], d[1]) for d in marshal.loads(result[1])]
+        if not entities:
+            continue
+        # Create a match with all entities found
+        new_match = SearchMatch(pos, word_count, entities, query_term)
+        new_match.chosen_entity = 0
+        matches[query_term] = new_match
+        search_query.add_match(new_match)
+    return matches
+
+
+def run():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
-    db_conn = load_dict(DATA_DIR + DICT, fix=True)
+    writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-tagme."))
+    db_conn = load_dict(DATA_DIR + DICT, fix=False)
+    exporter = Export()
     for query in parser.query_array:
+        query.spell_check()
         entities = search_entities(query, db_conn, take_largest=True)
-        print("Search matches: ", query.search_matches)
+        if DEBUG:
+            pass
+            # print("Search matches: ", query.search_matches)
         for index in range(len(query.search_matches)):  # for each match
             choose_entity(query.search_matches[index], query.search_matches, index)
         final = prune(query)
-        print("Final entities after pruning: ", final)
+        if DEBUG:
+            pass
+            # print("Final entities after pruning: ", final)
+        for match in query.search_matches:
+            try:
+                match.get_chosen_entity().validate()
+            except:
+                continue
+        for true_match in query.true_entities:
+            true_match.get_chosen_entity().validate()
         evaluate_score(query, parser, use_chosen_entity=True)
         query.visualize()
-
+        query.add_to_export(exporter)
+        writer.write_query(query)
+    exporter.export()
+    writer.commit()
 
     # evaluate solution
-    print_F1(parser)
+    print("Tagme results with parameters ENTITIES_LIMIT=", ENTITIES_LIMIT, "PROB_LIMIT=", PROB_LIMIT, "THETA=", THETA,
+          "EPSILON=", EPSILON, ".")
+    print("Times we chose voted entity:", COUNTER, "out of", len(parser.query_array), "queries.")
+    return print_F1(parser)
+
+
+def brute_force():
+    parser = QueryParser(DATA_DIR + TRAIN_XML)
+    # writer = QueryWriter("a")
+    db_conn = load_dict(DATA_DIR + DICT, fix=False)
+    exporter = Export()
+    c = db_conn.cursor()
+    for query in parser.query_array:
+        query.spell_check()
+        all_segmentations = word_combinations(query.search_string)
+        scores = []
+        query_matches = []
+        match_dict = {}
+        for segmentation in all_segmentations:
+            # print(segmentation)
+            matches = search_entities2(query, c, segmentation, match_dict)
+            for index in range(len(query.search_matches)):  # for each match
+                choose_entity(query.search_matches[index], query.search_matches, index)
+            final, total_coh = prune(query)
+            scores.append(total_coh / len(segmentation))
+            query_matches.append(list(query.search_matches))
+            match_dict.update(matches)
+            query.search_matches = []
+        print(scores)
+        best_segmentation = np.argmax(scores)
+        print("final segmentation:", all_segmentations[best_segmentation])
+        query.search_matches = query_matches[best_segmentation]
+        print(query.get_chosen_entities())
+        if DEBUG:
+            print("Search matches: ", query.search_matches)
+            print("Final entities after pruning: ", final)
+        for match in query.search_matches:
+            try:
+                match.get_chosen_entity().validate()
+            except:
+                continue
+        for true_match in query.true_entities:
+            true_match.get_chosen_entity().validate()
+        evaluate_score(query, parser, use_chosen_entity=True)
+        query.visualize()
+        query.add_to_export(exporter)
+        # writer.write_query(query)
+    exporter.export()
+
+    # evaluate solution
+    print("Tagme results with parameters ENTITIES_LIMIT=", ENTITIES_LIMIT, "PROB_LIMIT=", PROB_LIMIT, "THETA=", THETA,
+          "EPSILON=", EPSILON, ".")
+    print("Times we chose voted entity:", COUNTER, "out of", len(parser.query_array), "queries.")
+    return print_F1(parser)
+
+
+if __name__ == '__main__':
+    # global THETA, EPSILON
+    # f1s = {}
+    # epsilons = [0.1, 0.2, 0.3]
+    # thetas = [0.2, 0.3, 0.4]
+    # for t in thetas:
+    # THETA = t
+    #     for e in epsilons:
+    #         EPSILON = e
+    #         f1s["Theta: " + str(t) + " Epsilon:" + str(e)] = run()
+    #         print(THETA, EPSILON)
+    # print(f1s)
+    # brute_force()
+    run()
+
