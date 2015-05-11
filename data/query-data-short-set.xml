@@ -64,4 +64,17 @@
             </annotation>
         </query>
    </session>
+    <session id="trec-2012-15" numqueries="2">
+          <query adult="false" ambiguous="false" assessor="17" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:30:12.425318">
+             <text><![CDATA["russian politics" kursk submarine]]></text>
+             <annotation main="false">
+                <span><![CDATA[russian politics]]></span>
+                <target wiki-id="25704"><![CDATA[http://en.wikipedia.org/wiki/Politics_of_Russia]]></target>
+             </annotation>
+             <annotation main="true">
+                <span><![CDATA[kursk submarine]]></span>
+                <target wiki-id="26347"><![CDATA[http://en.wikipedia.org/wiki/Russian_submarine_K-141_Kursk]]></target>
+             </annotation>
+          </query>
+    </session>
 </webscope>

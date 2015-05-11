@@ -2,7 +2,6 @@
 
 from core.helper import TermColor
 
-
 def evaluate_score(query, parser, use_chosen_entity=False):
     """
     :param query:
@@ -83,35 +82,38 @@ def evaluate_score(query, parser, use_chosen_entity=False):
 
 
 def print_F1(parser):
-    # compute precision, recall and f1
-    # in the strict, the TP-relaxed are counted as false positives !
+    try:
+        # compute precision, recall and f1
+        # in the strict, the TP-relaxed are counted as false positives !
 
-    precision_s = float(parser.tp_s) / (parser.tp_s + parser.tp_l + parser.fp)
-    recall_s = float(parser.tp_s) / (parser.tp_s + parser.fn)
-    f1_s = 2 * float(precision_s * recall_s) / ( precision_s + recall_s)
+        precision_s = float(parser.tp_s) / (parser.tp_s + parser.tp_l + parser.fp)
+        recall_s = float(parser.tp_s) / (parser.tp_s + parser.fn)
+        f1_s = 2 * float(precision_s * recall_s) / ( precision_s + recall_s)
 
-    precision_l = float(parser.tp_s + parser.tp_l) / (parser.tp_s + parser.tp_l + parser.fp)
-    recall_l = float(parser.tp_s + parser.tp_l) / (parser.tp_s + parser.tp_l + parser.fn)
+        precision_l = float(parser.tp_s + parser.tp_l) / (parser.tp_s + parser.tp_l + parser.fp)
+        recall_l = float(parser.tp_s + parser.tp_l) / (parser.tp_s + parser.tp_l + parser.fn)
 
-    f1_l = 2 * float(precision_l * recall_l) / ( precision_l + recall_l)
+        f1_l = 2 * float(precision_l * recall_l) / ( precision_l + recall_l)
 
-    assert (precision_s <= precision_l)
-    print("*" * 60)
-    print("{0}{1}{2}{3}{4}{5}".format(TermColor.BOLD, "Total queries :", len(parser.query_array),
-                                      "; Total matches :", parser.total_matches, TermColor.END))
-    if parser.queries_with_some_identical_true_entities > 0:
-        print("(Queries with identical true entities: %s)" % (parser.queries_with_some_identical_true_entities))
-    print("{0}{1}{2}{3}".format(TermColor.GREEN, parser.tp_s, " Strict True Positives", TermColor.END))
-    print("{0}{1}{2}{3}".format(TermColor.YELLOW, parser.tp_l, " Relaxed True Positives ", TermColor.END))
-    print("{0}{1}{2}{3}".format(TermColor.RED, parser.fp, " False Positives", TermColor.END))
-    print("{0}{1}{2}{3}".format(TermColor.BLUE, parser.fn, " False Negatives", TermColor.END))
-    print("*" * 60)
-    print("{0:<15} | {1:12} | {2:12} | {3:12}".format("SCORE", "precision", "recall", "F1"))
-    print("-" * 60, "\n{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("relaxed",
-                                                                        round(precision_l, 4), round(recall_l, 4),
-                                                                        TermColor.BOLD, round(f1_l, 4), TermColor.END))
-    print("{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("STRICT",
-                                                            round(precision_s, 4), round(recall_s, 4), TermColor.BOLD,
-                                                            round(f1_s, 4), TermColor.END))
-    print("*" * 60)
-    return f1_s
+        assert (precision_s <= precision_l)
+        print("*" * 60)
+        print("{0}{1}{2}{3}{4}{5}".format(TermColor.BOLD, "Total queries :", len(parser.query_array),
+                                          "; Total matches :", parser.total_matches, TermColor.END))
+        if parser.queries_with_some_identical_true_entities > 0:
+            print("(Queries with identical true entities: %s)" % (parser.queries_with_some_identical_true_entities))
+        print("{0}{1}{2}{3}".format(TermColor.GREEN, parser.tp_s, " Strict True Positives", TermColor.END))
+        print("{0}{1}{2}{3}".format(TermColor.YELLOW, parser.tp_l, " Relaxed True Positives ", TermColor.END))
+        print("{0}{1}{2}{3}".format(TermColor.RED, parser.fp, " False Positives", TermColor.END))
+        print("{0}{1}{2}{3}".format(TermColor.BLUE, parser.fn, " False Negatives", TermColor.END))
+        print("*" * 60)
+        print("{0:<15} | {1:12} | {2:12} | {3:12}".format("SCORE", "precision", "recall", "F1"))
+        print("-" * 60, "\n{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("relaxed",
+                                                                            round(precision_l, 4), round(recall_l, 4),
+                                                                            TermColor.BOLD, round(f1_l, 4), TermColor.END))
+        print("{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("STRICT",
+                                                                round(precision_s, 4), round(recall_s, 4), TermColor.BOLD,
+                                                                round(f1_s, 4), TermColor.END))
+        print("*" * 60)
+        return f1_s
+    except ZeroDivisionError as e:
+        print("well you fools, there was no score or something went zero!")
