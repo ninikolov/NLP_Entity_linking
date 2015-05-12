@@ -89,10 +89,10 @@ def main():
 
     ds = []
 
-    # a = match_disambiguation('PNC', 'online banking')
-    # print(a)
-    b = select_best_entity(['Green_laser', 'Viridian Green Laser Sights'], 'Glock')
-    print(b)
+    a = match_disambiguation('PNC', 'online banking')
+    print(a)
+    # b = select_best_entity(['Green_laser', 'Viridian Green Laser Sights'], 'Glock')
+    # print(b)
 
 if __name__ == "__main__":
     main()
