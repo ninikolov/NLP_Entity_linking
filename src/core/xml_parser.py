@@ -53,6 +53,13 @@ class QueryParser():
         # true positive, flase positives and false negatives (calculated in score.py>calc_tp_fp_fn)
         self.tp_s = self.tp_l = self.fp = self.fn = 0
 
+        # these numbers are used for the segmentation. They are the average of the word counts
+        # and entity counts over all the parser and are used in the scoring function of each segment.
+        self.word_count_all = []
+        self.entity_count_all = []
+        self.avg_word = 1
+        self.avg_entities = 1
+
         # amount of queries and matches checked (also calculated in score.py>calc_tp_fp_fn)
         self.total_matches = 0
         self.queries_with_some_identical_true_entities = 0
@@ -62,6 +69,15 @@ class QueryParser():
         :return: An array with the text of the queries
         """
         return [a.__repr__() for a in self.query_array]
+
+
+    def update_segmentation_averages(self):
+        self.avg_word = sum(self.word_count_all)/len(self.word_count_all)
+        self.avg_entities = sum(self.entity_count_all)/len(self.entity_count_all)
+
+    def print_segmentation_stat(self):
+        print ("average word count : ", self.avg_word)
+        print ("average entity count : ", self.avg_entities)
 
     def _build_queries(self):
         """Populate our array of SearchQuery items.

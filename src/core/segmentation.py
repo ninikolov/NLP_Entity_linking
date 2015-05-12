@@ -8,6 +8,7 @@ from inflection import pluralize, singularize
 from collections import defaultdict
 from operator import itemgetter
 
+from core.helper import TermColor, color_print
 from core.query import Entity, SearchMatch
 from core.nltk.nltk_functions import hard_fix, soft_fix, chunk, get_array
 
@@ -56,8 +57,7 @@ def check_overlap(new_match, search_query):
                          previous_match.position + previous_match.word_count)):
             # there is an overlap
             if (new_match.word_count < previous_match.word_count):
-                # new term is shorter
-                # print("         *** SHORTER >> SKIP")
+                # new term is shorter)
                 return True
 
             assert (new_match.word_count == previous_match.word_count)
@@ -77,11 +77,8 @@ def check_overlap_v2(match2, search_query):
     Checks if the new search term is overlapping with
     previous search terms in the query, based on their
     relative positions.
-    * If it is overlapping and shorter, it is not added
-    (ie. the longer string is kept)
-    * If it is overlapping and of same length, the entity
-    with highest probability is kept.
-
+    * If it is overlapping, the one with the less entities 
+    is kept
     :param match2:
     :return: Returns True if it is overlapping or
     """
@@ -114,6 +111,29 @@ def check_overlap_v2(match2, search_query):
                     # remove old match
                     match1.chosen_entity = -1
 
+    return False
+
+
+def check_overlap_simple(new_match, search_query):
+    """
+    Checks if the new search term is overlapping with
+    previous search terms in the query, based on their
+    relative positions.
+
+    :param new_match:
+    :return: Returns the overlapping Term or False
+    """
+
+    for match1 in search_query.search_matches:
+        if ((not match1.entities) or match1.entities == -1):
+            continue
+    
+        if (( match1.position < new_match.position + new_match.word_count <
+                      match1.position + match1.word_count) or
+                (match1.position < new_match.position <
+                         match1.position + match1.word_count)):
+            # there is an overlap
+            return match1
     return False
 
 
@@ -177,7 +197,7 @@ def word_combinations(query):
         combinations.append([" ".join(group[i]) for i in range(len(group))])
     return combinations
 
-def search_entities(search_query, db_conn, take_largest=True):
+def segmentation(search_query, db_conn, parser, take_largest=True):
     """
     New version to build upon the baseline
     :param search_string:
@@ -189,7 +209,8 @@ def search_entities(search_query, db_conn, take_largest=True):
     # print("entity_search", search_query.search_string)
 
     c = db_conn.cursor()
-    for i in range(len(search_query.array), 0, -1):  # Try combinations with up to 3 words
+    #delete_stop_words = delete_stop_words(search_query.array)
+    for i in range(len(search_query.array), 0, -1):  # Try combinations with up to n words
         pos = -1  # position of the words in the string
         for query_term in window(search_query.array, n=i):
             pos += 1  # windows is moved to the right
@@ -215,11 +236,24 @@ def search_entities(search_query, db_conn, take_largest=True):
                     continue
                 # Create a match with all entities found
                 new_match = SearchMatch(pos, i, entities, option)
-                if take_largest:
-                    if check_overlap(new_match, search_query):
+                overlap = check_overlap_simple(new_match, search_query)
+                if overlap:
+                    print("--------------")
+                    print("OVERLAP ", segment_score(new_match, parser),
+                         " vs ",segment_score(overlap, parser))
+                    #check if score of new segment is higher
+                    if segment_score(new_match, parser) < segment_score(overlap, parser):
+                        #NO, it isn't ! so ignore 
                         continue
+                    #remove old match
+                    search_query.search_matches.remove(overlap)
                 new_match.chosen_entity = 0
                 search_query.add_match(new_match)
+
+def delete_stop_words(array):
+    stop_words = set(('and', 'or', 'not', 'for', 'in'))
+    new = [word for word in array if word not in stop_words]
+    return new
 
 def segmenter(array):
 
@@ -236,24 +270,45 @@ def segmenter(array):
 def count_prepositions(array):
     tagged = nltk.pos_tag(array)
 
-def segment_score(search_match):
+global word_count_all 
+global entity_count_all 
 
-    score = [0,0]
-    weights = [0.5, 0.5]
+def segment_score(search_match, parser):
+
+    score = [0,0,0]
+    #WEIGHT OF SEGMENTATION SCORES ARE DEFINED HERE **
+    #First weight : Word count (normalized)
+    #Second weight : Amount of entities (normalized)
+    #Third weight : 
+    #weights = [100/parser.avg_word, 1/parser.avg_entities, 1]
+
+    #weights = [1/1.5, 380, 3]
+
+    #FOR NOW the weights do not include the entity count as there seem 
+    #to be no clear pattern
+    weights = [1/parser.avg_word, 0, 1.5]
     score[0] = search_match.word_count
-    score[1] = len(search_match.entities)
-    score[2] = homogeneity(search_match.array)
+    score[1] = 1/len(search_match.entities)
+    score[2] = homogeneity(search_match.substring)
+    #score[3] = search_match.entities[0]
+    parser.word_count_all.append(score[0])
+    parser.entity_count_all.append(score[1])
+    color_print(search_match.substring, TermColor.GREEN)
+    color_print("word count score: "+ str(score[0]) + 
+        " (avg " + str(parser.avg_word) + ")")
+    color_print("entities count score: "+ str(score[1])+ 
+        " (avg " + str(parser.avg_entities) + ")")
+    color_print("homogeneity score: "+ str(score[2]))
+    return sum([a*b for a,b in zip(weights,score)])
 
-    return [a*b for a,b in zip(weights,score)]
-
-def homogeneity(array):
+def homogeneity(string):
 
     """
     Returns a score based on how many different 
     types of words are in the string (ADJ, NOUN, etc)
     One type returns a score s=1, 2 types s=0.5, 3 types s=0.
     """
-    #array = nltk.word_tokenize(string)
+    array = nltk.word_tokenize(string)
     tagged = nltk.pos_tag(array)
 
     counts = defaultdict(int)
