@@ -1,6 +1,6 @@
 import requests
 import requests_cache
-from .fuzzymatch_titles import match_levenshtein, match_or
+from .fuzzy_helper import match_levenshtein, match_or
 from pprint import pprint
 import marshal
 import IPython
