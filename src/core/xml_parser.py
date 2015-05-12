@@ -75,36 +75,51 @@ class QueryParser():
 
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
-                query_str = query_str.replace('"', "")
+                print(query_str)
+                # Replacing quotes for now
+                # They could be potentially useful for queries as with quotes it's known the words
+                # have to be connected by an &
+                query_str = query_str.replace('"', '')
+                if '"' in query_str:
+                    print("HAS a quote in it: ", query_str)
 
                 new_query = SearchQuery(query_str, search_session)
-
+                new_query.with_double_quotes = unquote(query.find_all("text")[0].text)
+                curr_pos = 0
                 for ann in query.find_all("annotation"):
+                    ann_spann = ann.span
                     try:
                         entity_str = unquote(extract_entity_name(ann.find_all("target")[0].text))
                         entity = Entity(entity_str, 1)
                     except IndexError:  # No true_entities here
+                        curr_pos += len(ann.find_all("span")[0].text.split())
+
                         continue
                     try:
                         match_str = unquote(ann.find_all("span")[0].text)
                         match_str = match_str.replace('"', "")
                         # find the amount of word separators in the string before the occurence of span
-                        str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
-                                              re.IGNORECASE)
-                        position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                        # str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
+                        #                       re.IGNORECASE)
+                        # position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+                        position = curr_pos
+                        curr_pos += len(ann.find_all("span")[0].text.split())
 
                         assert (isinstance(position, int))
 
                         new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
-
                     except Exception as e:
                         print("Couldn't add \"%s\" to %s, there was some issue" % (ann, query_str))
                         new_query = None
 
+                print(ann.find_all("span")[0].text.split(), curr_pos)
+
                 if new_query:
                     self.query_array.append(new_query)
+                    print(new_query)
+                    print(new_query.true_entities)
                     search_session.append(new_query)
 
 
