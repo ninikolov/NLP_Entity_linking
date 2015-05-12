@@ -174,10 +174,12 @@ class SearchQuery(object):
         true_res = OrderedDict()
         m = list(self.true_entities)
         m.sort(key=lambda s: s.position)
+        print("\n\n", self.search_string)
         for t in m:
             # print("True Ent: ", t)
             ent = t.get_chosen_entity()
             # print(ent.link, t.word_count, t.position)
+            print(ent.link, t.word_count, t.position)
             if ent:
                 true_res[ent.link] = {
                     "link": "http://en.wikipedia.org/wiki/" + ent.link,

@@ -103,38 +103,12 @@ class Sheet(object):
             text = None
             cell_data = key
             cell_opts = cells[key]
-            if isinstance(cell_data, (datetime.date, datetime.datetime)):
-                cell.setAttribute("office:value-type", "date")
-                date_str = cell_data.isoformat()
-                cell.setAttribute("office:date-value", date_str)
-                cell.setAttribute("table:style-name", "cDateISO")
-                text = date_str
 
-            elif isinstance(cell_data, datetime.time):
-                cell.setAttribute("office:value-type", "time")
-                cell.setAttribute("office:time-value",
-                                  cell_data.strftime("PT%HH%MM%SS"))
-                cell.setAttribute("table:style-name", "cTime")
-                text = cell_data.strftime("%H:%M:%S")
-
-            elif isinstance(cell_data, bool):
-                # Bool condition must be checked before numeric because:
-                # isinstance(True, int): True
-                # isinstance(True, bool): True
-                cell.setAttribute("office:value-type", "boolean")
-                cell.setAttribute("office:boolean-value",
-                                  "true" if cell_data else "false")
-                cell.setAttribute("table:style-name", "cBool")
-                text = "TRUE" if cell_data else "FALSE"
-
-            elif isinstance(cell_data, (float, int, decimal.Decimal, long)):
+            if isinstance(cell_data, (float, int, decimal.Decimal, long)):
                 cell.setAttribute("office:value-type", "float")
                 float_str = unicode(cell_data)
                 cell.setAttribute("office:value", float_str)
                 text = float_str
-
-            elif isinstance(cell_data, Formula):
-                cell.setAttribute("table:formula", str(cell_data))
 
             elif cell_data is None:
                 pass  # Empty element
@@ -165,6 +139,10 @@ class Sheet(object):
                     cell.setAttribute("table:number-rows-spanned", "1")
 
             row.appendChild(cell)
+            if cell_opts.get('span'):
+                n_span = cell_opts['span']
+                for i in range(0, int(n_span) - 1):
+                    row.appendChild(self.dom.createElement("table:covered-table-cell"))
 
         self.table.appendChild(row)
 

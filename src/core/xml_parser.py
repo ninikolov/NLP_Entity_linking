@@ -88,11 +88,13 @@ class QueryParser():
         for session in self.soup.find_all("session"):
             session_id = session["id"]
             search_session = SearchSession(session_id)
+
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
                 query_str = query_str.replace('"', "")
+
                 new_query = SearchQuery(query_str, search_session)
-                search_session.append(new_query)
+
                 for ann in query.find_all("annotation"):
                     try:
                         entity_str = extract_entity_name(ann.find_all("target")[0].text)
@@ -106,15 +108,20 @@ class QueryParser():
                         str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
                                               re.IGNORECASE)
                         position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+
                         assert (isinstance(position, int))
+
                         new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
+
                     except Exception as e:
-                        print("Couldn't add \"%s\", there was some issue" % query_str)
+                        print("Couldn't add \"%s\" to %s, there was some issue" % (ann, query_str))
                         new_query = None
+
                 if new_query:
                     self.query_array.append(new_query)
+                    search_session.append(new_query)
 
 
 class QueryOutput():
@@ -196,23 +203,19 @@ def load_dict(file_path, fix=False):
         c.execute('''CREATE TABLE entity_mapping (words TEXT, entities BLOB)''')
         with open(file_path, "r", encoding='utf-8') as csvfile:
             crosswiki = csv.reader(csvfile, delimiter="\t")
-            first_row = next(crosswiki)
-            search_word = first_row[0]
+            # first_row = next(crosswiki)
+            search_word = None
+            first = True
             contents = []
             counter = 0
-            c.execute('BEGIN TRANSACTION')
             for row in crosswiki:
                 # Loop through all the rows in the csv
                 if row[0] != search_word:
                     if contents:
                         c.execute('INSERT INTO entity_mapping VALUES(?, ?)', (search_word, marshal.dumps(contents)))
-                        counter += 1
+                        print('inserting stuff')
                     contents = []
                     search_word = row[0]
-                if counter == 30000:  # Buffer insert queries and commit them at once
-                    conn.commit()
-                    counter = 0
-                    c.execute('BEGIN TRANSACTION')
                 # Split second part of csv - different separator from \t
                 try:
                     row_ = row[1].split()
@@ -220,12 +223,15 @@ def load_dict(file_path, fix=False):
                     continue
                 prob = row_[0]
                 entity = row_[1]
-                if fix:
-                    if row[0].startswith(" ") or row[0].endswith(" "):
-                        continue
-                    entity = fix_entity(entity)
+                # if fix:
+                #     if row[0].startswith(" ") or row[0].endswith(" "):
+                #         continue
+                #     entity = fix_entity(entity)
                 # adding the entity and prob to the list as a dictionary
+                if search_word == "0":
+                    print(entity)
                 contents.append((entity, prob))
+            conn.commit()
             print("Database created")
     except sqlite3.OperationalError:
         print("Database already exists, cool!")

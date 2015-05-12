@@ -1,6 +1,6 @@
 import requests
 import requests_cache
-from fuzzymatch_titles import match_levenshtein, match_or
+from .fuzzymatch_titles import match_levenshtein, match_or
 from pprint import pprint
 import marshal
 import IPython
@@ -13,18 +13,18 @@ WD_URL = 'https://wikidata.org/entity/{entity}.json'
 WD_PROP_QUERY = 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles={entity_title}&languages=en&format=json'
 WD_RESULT_QUERY = 'https://www.wikidata.org/w/api.php?action=wbgetentities&sites=enwiki&titles={entity_title}&languages=en&format=json'
 
-def init_wikidata():
+def init_wikidata(data_dir):
     global all_break_words
     global all_properties
     try:
-        with open('wikidata_properties.pickle', 'rb+') as pickle_file:
+        with open(data_dir + 'wikidata_properties.pickle', 'rb+') as pickle_file:
             ms = marshal.load(pickle_file)
             all_break_words = ms[0]
             all_properties = ms[1]
     except FileNotFoundError:
         print("No file found ... ")
 
-    with open('wikidata_properties.txt') as wp:
+    with open(data_dir + 'wikidata_properties.txt') as wp:
         lines = [line.rstrip('\n') for line in wp.readlines()]
         for line in lines:
             if line not in all_properties:
@@ -46,7 +46,7 @@ def init_wikidata():
 
     print(all_break_words)
 
-    with open('wikidata_properties.pickle', 'wb+') as pickle_file:
+    with open(data_dir + 'wikidata_properties.pickle', 'wb+') as pickle_file:
         marshal.dump((all_break_words, all_properties), pickle_file)
 
 
@@ -62,7 +62,9 @@ def query_wiki(q_a, searched_props):
     props = props.json()
     claim = []
     for matched_ent in props['entities'].values():
-        claims = matched_ent['claims']
+        claims = matched_ent.get('claims')
+        if not claims:
+            return []
         pprint(claims.keys())
         for searched_prop in searched_props:
             if searched_prop in claims:
@@ -89,6 +91,8 @@ def query_wiki(q_a, searched_props):
 
 def find_breakword(elem):
     print(elem)
+    if len(elem) <= 3:
+        return None
     for break_word in all_break_words:
         if (elem.startswith(break_word) or break_word.startswith(elem)) and abs(len(elem) - len(break_word)) <= 2:
             print("\n\n\n\n\nLENGHT: ", abs(len(elem) - len(break_word)))
@@ -106,8 +110,10 @@ def check_wiki_data(query_array):
                 if bw in val['break_words']:
                     search_props.append(key)
             return query_wiki(query_without_breakword, search_props)
-
+    return None
 
 if __name__ == '__main__':
-    init_wikidata()
-    check_wiki_data("siblings of michael jackson".split())
+    init_wikidata('../data/')
+    # check_wiki_data("siblings of michael jackson".split())
+    # check_wiki_data("birthplace of van gogh".split())
+    check_wiki_data("wife of barack obama".split())
