@@ -71,8 +71,8 @@ def score(elems, matches):
                 if temp_score > 0:
                     streak = 1 if prev_match_idx == elem_idx - 1 else 0
                     prev_match_idx = elem_idx
-                    if streak:
-                        print("STREACK")
+                    # if streak:
+                    #     print("STREACK")
                     match_score += temp_score + streak + 1 # add plus one for amount of matched substrings
 
                     # TODO maybe remove substring from query ...
@@ -94,6 +94,9 @@ def score(elems, matches):
                 chosen = matches[idx]
                 chosen_idx = idx
                 prev_match_score = match_score
+    print(matches)
+    # if not chosen_idx:
+    #     return None
 
     return (matches[chosen_idx], match_score)
 
@@ -125,17 +128,18 @@ def get_match_or_redirect(el):
         cur2.execute("""select redirect.rd_title from redirect where rd_from = %s""", (el[0], ))
         rd = cur2.fetchone()
         if rd:
-            res = rd[0]
-            print(rd)
-        return res
+            return rd[0].replace("''", "'")
+        else:
+            return el[1].replace("''", "'") # table contains these weird double quotes
     elif type(el) == str:
         cur2.execute("""select redirect.rd_title from redirect where rd_from = %s""", (el, ))
         rd = cur2.fetchone()
         print(rd)
         if rd:
-            return cur2[0]
+            return rd[0].replace("''", "'")
         else:
-            return el
+            return el.replace("''", "'") # table contains these weird double quotes
+
     else:
         return None
 

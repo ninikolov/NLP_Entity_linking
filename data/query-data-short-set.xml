@@ -1,7 +1,48 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <webscope numqueries="528" numsessions="187">
+    <session id="trec-2010-134" numqueries="2">
+        <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false"
+               non-english="false" quote-question="false" starttime="1">
+            <text><![CDATA[poker tournaments]]></text>
+            <annotation main="true">
+                <span><![CDATA[poker tournaments]]></span>
+                <target wiki-id="141837"><![CDATA[http://en.wikipedia.org/wiki/Poker_tournament]]></target>
+            </annotation>
+        </query>
+        <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false"
+               non-english="false" quote-question="false" starttime="2">
+            <text><![CDATA[texas hold em ]]></text>
+            <annotation main="true">
+                <span><![CDATA[texas hold em]]></span>
+                <target wiki-id="75698"><![CDATA[http://en.wikipedia.org/wiki/Texas_hold_'em]]></target>
+            </annotation>
+        </query>
+    </session>
 
     <session id="yahoo-26" numqueries="2">
+        <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="false" no-wp="false"
+               non-english="false" quote-question="false" starttime="1">
+            <text><![CDATA[karl rove's bad night]]></text>
+         <annotation main="true">
+             <span><![CDATA[karl rove's]]></span>
+             <target wiki-id="19329135"><![CDATA[http://en.wikipedia.org/wiki/Karl_Rove]]></target>
+         </annotation>
+         <annotation main="false">
+             <span><![CDATA[bad]]></span>
+         </annotation>
+         <annotation main="false">
+             <span><![CDATA[night]]></span>
+             <target wiki-id="206119"><![CDATA[http://en.wikipedia.org/wiki/Night]]></target>
+         </annotation>
+      </query>
+        <query adult="false" ambiguous="false" assessor="10" cannot-judge="false" navigational="true" no-wp="false"
+               non-english="false" quote-question="false" starttime="25">
+            <text><![CDATA[victoria s secret]]></text>
+         <annotation main="true">
+             <span><![CDATA[victoria s secret]]></span>
+             <target wiki-id="22418985"><![CDATA[http://en.wikipedia.org/wiki/Victoria's_Secret]]></target>
+         </annotation>
+      </query>
         <query adult="false" ambiguous="false" assessor="19" cannot-judge="false" navigational="false" no-wp="false"
                non-english="false" quote-question="false" starttime="81.835439">
             <text><![CDATA[policies for addressing economic problems in europe]]></text>
@@ -32,4 +73,348 @@
             </annotation>
         </query>
     </session>
+    <session id="yahoo-213" numqueries="1">
+        <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="true" no-wp="false"
+               non-english="false" quote-question="false" starttime="1">
+            <text><![CDATA[msn.com]]></text>
+          <annotation main="false">
+                <span><![CDATA[msn.com]]></span>
+                <target wiki-id="185041"><![CDATA[http://en.wikipedia.org/wiki/MSN]]></target>
+            </annotation>
+        </query>
+   </session>
+    <session id="trec-2012-15" numqueries="2">
+          <query adult="false" ambiguous="false" assessor="17" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:30:12.425318">
+             <text><![CDATA["russian politics" kursk submarine]]></text>
+             <annotation main="false">
+                <span><![CDATA[russian politics]]></span>
+                <target wiki-id="25704"><![CDATA[http://en.wikipedia.org/wiki/Politics_of_Russia]]></target>
+             </annotation>
+             <annotation main="true">
+                <span><![CDATA[kursk submarine]]></span>
+                <target wiki-id="26347"><![CDATA[http://en.wikipedia.org/wiki/Russian_submarine_K-141_Kursk]]></target>
+             </annotation>
+          </query>
+    </session>
+<session id="yahoo-60" numqueries="1">
+      <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="true" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[google]]></text>
+         <annotation main="true">
+            <span><![CDATA[google]]></span>
+            <target wiki-id="1092923"><![CDATA[http://en.wikipedia.org/wiki/Google]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="trec-2010-132" numqueries="2">
+      <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[disneyland special offers]]></text>
+         <annotation main="true">
+            <span><![CDATA[disneyland]]></span>
+            <target wiki-id="15937788"><![CDATA[http://en.wikipedia.org/wiki/Disneyland]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[special offers]]></span>
+            <target wiki-id="239874"><![CDATA[http://en.wikipedia.org/wiki/Sales_promotion]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="2">
+         <text><![CDATA[disneyland ]]></text>
+         <annotation main="true">
+            <span><![CDATA[disneyland]]></span>
+            <target wiki-id="15937788"><![CDATA[http://en.wikipedia.org/wiki/Disneyland]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="yahoo-164" numqueries="3">
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[anchors resign on air]]></text>
+         <annotation main="true">
+            <span><![CDATA[anchors]]></span>
+            <target wiki-id="156746"><![CDATA[http://en.wikipedia.org/wiki/News_presenter]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[resign]]></span>
+            <target wiki-id="481387"><![CDATA[http://en.wikipedia.org/wiki/Resignation]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[on air]]></span>
+            <target wiki-id="113604"><![CDATA[http://en.wikipedia.org/wiki/Broadcasting]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="2">
+         <text><![CDATA[Anchors resign on air]]></text>
+         <annotation main="true">
+            <span><![CDATA[Anchors]]></span>
+            <target wiki-id="156746"><![CDATA[http://en.wikipedia.org/wiki/News_presenter]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[resign]]></span>
+            <target wiki-id="481387"><![CDATA[http://en.wikipedia.org/wiki/Resignation]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[on air]]></span>
+            <target wiki-id="113604"><![CDATA[http://en.wikipedia.org/wiki/Broadcasting]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="3">
+         <text><![CDATA[dirty jobs canceled]]></text>
+         <annotation main="false">
+            <span><![CDATA[dirty jobs]]></span>
+            <target wiki-id="2525506"><![CDATA[http://en.wikipedia.org/wiki/Dirty_Jobs]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[canceled]]></span>
+            <target wiki-id="11752874"><![CDATA[http://en.wikipedia.org/wiki/Cancellation_(television)]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="yahoo-241" numqueries="1">
+      <query adult="false" ambiguous="false" assessor="5" cannot-judge="false" navigational="true" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[google]]></text>
+         <annotation main="true">
+            <span><![CDATA[google]]></span>
+            <target wiki-id="1092923"><![CDATA[http://en.wikipedia.org/wiki/Google]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="yahoo-213" numqueries="1">
+      <query adult="false" ambiguous="false" assessor="4" cannot-judge="false" navigational="true" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[msn.com]]></text>
+         <annotation main="false">
+            <span><![CDATA[msn.com]]></span>
+            <target wiki-id="185041"><![CDATA[http://en.wikipedia.org/wiki/MSN]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="trec-2011-55" numqueries="7">
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:45:00.348206">
+         <text><![CDATA[American girl dolls]]></text>
+         <annotation main="false">
+            <span><![CDATA[American girl dolls]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="true" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:46:48.941529">
+         <text><![CDATA[New York American Girl dolls price]]></text>
+         <annotation main="false">
+            <span><![CDATA[New York]]></span>
+         </annotation>
+         <annotation main="true">
+            <span><![CDATA[American Girl]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[dolls]]></span>
+            <target wiki-id="166622"><![CDATA[http://en.wikipedia.org/wiki/Doll]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[price]]></span>
+            <target wiki-id="211295"><![CDATA[http://en.wikipedia.org/wiki/Price]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="true" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:47:46.773419">
+         <text><![CDATA[New York American Girl dolls cost]]></text>
+         <annotation main="false">
+            <span><![CDATA[New York]]></span>
+         </annotation>
+         <annotation main="true">
+            <span><![CDATA[American Girl]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[dolls]]></span>
+            <target wiki-id="166622"><![CDATA[http://en.wikipedia.org/wiki/Doll]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[cost]]></span>
+            <target wiki-id="166789"><![CDATA[http://en.wikipedia.org/wiki/Cost]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:48:13.597863">
+         <text><![CDATA[American Girl dolls cost $]]></text>
+         <annotation main="true">
+            <span><![CDATA[American Girl]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[dolls]]></span>
+            <target wiki-id="166622"><![CDATA[http://en.wikipedia.org/wiki/Doll]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[cost]]></span>
+            <target wiki-id="166789"><![CDATA[http://en.wikipedia.org/wiki/Cost]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:49:04.849042">
+         <text><![CDATA[American Girl doll retail price]]></text>
+         <annotation main="true">
+            <span><![CDATA[American Girl]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[retail]]></span>
+            <target wiki-id="183515"><![CDATA[http://en.wikipedia.org/wiki/Retail]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[price]]></span>
+            <target wiki-id="211295"><![CDATA[http://en.wikipedia.org/wiki/Price]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:49:27.832463">
+         <text><![CDATA[American Girl doll wiki]]></text>
+         <annotation main="true">
+            <span><![CDATA[American Girl]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[doll]]></span>
+            <target wiki-id="166622"><![CDATA[http://en.wikipedia.org/wiki/Doll]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[wiki]]></span>
+            <target wiki-id="32851"><![CDATA[http://en.wikipedia.org/wiki/Wiki]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="15:50:44.225989">
+         <text><![CDATA[American Girl wiki]]></text>
+         <annotation main="true">
+            <span><![CDATA[American Girl]]></span>
+            <target wiki-id="1868243"><![CDATA[http://en.wikipedia.org/wiki/American_Girl]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[wiki]]></span>
+            <target wiki-id="32851"><![CDATA[http://en.wikipedia.org/wiki/Wiki]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="yahoo-25" numqueries="1">
+      <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[hunnington ingalls]]></text>
+         <annotation main="true">
+            <span><![CDATA[hunnington ingalls]]></span>
+            <target wiki-id="31367338"><![CDATA[http://en.wikipedia.org/wiki/Huntington_Ingalls_Industries]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="yahoo-26" numqueries="2">
+      <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="1">
+         <text><![CDATA[karl rove's bad night]]></text>
+         <annotation main="true">
+            <span><![CDATA[karl rove's]]></span>
+            <target wiki-id="19329135"><![CDATA[http://en.wikipedia.org/wiki/Karl_Rove]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[bad]]></span>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[night]]></span>
+            <target wiki-id="206119"><![CDATA[http://en.wikipedia.org/wiki/Night]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="2">
+         <text><![CDATA[winter storm athena]]></text>
+         <annotation main="true">
+            <span><![CDATA[winter storm athena]]></span>
+            <target wiki-id="37571358"><![CDATA[http://en.wikipedia.org/wiki/November_2012_nor'easter]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="trec-2011-51" numqueries="3">
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="03:27:13.343229">
+         <text><![CDATA["jasper fforde" chronology]]></text>
+         <annotation main="true">
+            <span><![CDATA[jasper fforde]]></span>
+            <target wiki-id="191468"><![CDATA[http://en.wikipedia.org/wiki/Jasper_Fforde]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[chronology]]></span>
+            <target wiki-id="55931"><![CDATA[http://en.wikipedia.org/wiki/Chronology]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="03:29:12.670605">
+         <text><![CDATA["jasper fforde" questions answers contents]]></text>
+         <annotation main="true">
+            <span><![CDATA[jasper fforde]]></span>
+            <target wiki-id="191468"><![CDATA[http://en.wikipedia.org/wiki/Jasper_Fforde]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[questions]]></span>
+            <target wiki-id="502038"><![CDATA[http://en.wikipedia.org/wiki/Question]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[answers]]></span>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[contents]]></span>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="03:30:15.538669">
+         <text><![CDATA["jasper fforde" "thursday next" site]]></text>
+         <annotation main="false">
+            <span><![CDATA[jasper fforde]]></span>
+            <target wiki-id="191468"><![CDATA[http://en.wikipedia.org/wiki/Jasper_Fforde]]></target>
+         </annotation>
+         <annotation main="true">
+            <span><![CDATA["thursday next"]]></span>
+            <target wiki-id="1117954"><![CDATA[http://en.wikipedia.org/wiki/Thursday_Next]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[site]]></span>
+            <target wiki-id="33898"><![CDATA[http://en.wikipedia.org/wiki/Website]]></target>
+         </annotation>
+      </query>
+   </session>
+<session id="trec-2011-48" numqueries="4">
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="08:11:05.345877">
+         <text><![CDATA[Irving Berlin birthplace]]></text>
+         <annotation main="true">
+            <span><![CDATA[Irving Berlin]]></span>
+            <target wiki-id="48351"><![CDATA[http://en.wikipedia.org/wiki/Irving_Berlin]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[birthplace]]></span>
+            <target wiki-id="11206044"><![CDATA[http://en.wikipedia.org/wiki/Place_of_birth]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[Irving Berlin birthplace]]></span>
+            <target wiki-id="160978"><![CDATA[http://en.wikipedia.org/wiki/Mogilev]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="08:12:25.212521">
+         <text><![CDATA[Irving Berlin list of songs]]></text>
+         <annotation main="true">
+            <span><![CDATA[Irving Berlin]]></span>
+            <target wiki-id="48351"><![CDATA[http://en.wikipedia.org/wiki/Irving_Berlin]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[list of songs]]></span>
+            <target wiki-id="18711828"><![CDATA[http://en.wikipedia.org/wiki/List_of_songs_written_by_Irving_Berlin]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="08:13:40.839306">
+         <text><![CDATA[Irving Berlin complete list of songs]]></text>
+         <annotation main="true">
+            <span><![CDATA[Irving Berlin]]></span>
+            <target wiki-id="48351"><![CDATA[http://en.wikipedia.org/wiki/Irving_Berlin]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[complete list of songs]]></span>
+            <target wiki-id="18711828"><![CDATA[http://en.wikipedia.org/wiki/List_of_songs_written_by_Irving_Berlin]]></target>
+         </annotation>
+      </query>
+      <query adult="false" ambiguous="false" assessor="16" cannot-judge="false" navigational="false" no-wp="false" non-english="false" quote-question="false" starttime="08:15:05.021725">
+         <text><![CDATA[complete list of songs of Irving Berlin]]></text>
+         <annotation main="false">
+            <span><![CDATA[complete list of songs]]></span>
+            <target wiki-id="18711828"><![CDATA[http://en.wikipedia.org/wiki/List_of_songs_written_by_Irving_Berlin]]></target>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[of]]></span>
+         </annotation>
+         <annotation main="false">
+            <span><![CDATA[Irving Berlin]]></span>
+            <target wiki-id="48351"><![CDATA[http://en.wikipedia.org/wiki/Irving_Berlin]]></target>
+         </annotation>
+      </query>
+   </session>
 </webscope>

@@ -133,10 +133,13 @@ def new_match_or(exec_query_array, evaluate):
 
     els = postgres_cached(query_string, ps.FETCHALL)
     if els:
-        el, match_score = score(exec_query.split(), els)
-        print(el, match_score)
-        # TODO: add function to check score height
-        return(get_match_or_redirect(el))
+        # sc = score(exec_query.split(), els)
+        # el = sc[0]
+        # match_score = sc[1]
+        # print(el, match_score)
+        # # TODO: add function to check score height
+        print(els[0])
+        return(get_match_or_redirect(els[0]))
 
 
 def handle_query_old(query):
@@ -222,8 +225,39 @@ def prune_from_search(exec_query_array, result):
         for r in res_arr:
             if len(longest_common_substring(q, r)) > 3 or q == r or len(q) < 2:
                 delete.append(q)
-
+    if not len(delete):
+        return []
     return [e for e in exec_query_array if e not in delete]
+
+def project_results(query, res):
+    entities = []
+    for r in res:
+        entities.append(Entity(r, 1))
+
+    search_matches = []
+    def find_substring():
+        print(entities, query)
+        for e in entities:
+            start = 10000
+            end = 0
+            for idx, w in enumerate(query.array):
+                if len(longest_common_substring(e.link.lower(), w)) > 3 and start > idx:
+                    start = idx
+                if len(longest_common_substring(e.link.lower(), w)) > 3 and end < idx:
+                    end = idx + 1
+
+            if start == 10000:
+                start = 0
+            if end == 0:
+                end = 1
+            sm = SearchMatch(start, end-start, [e], " ".join(query.array[start:end]))
+            sm.chosen_entity = 0
+            search_matches.append(sm)
+            print(sm, sm.position, sm.word_count)
+    find_substring()
+    query.search_matches = search_matches
+    print(search_matches)
+    return search_matches
 
 def handle_query(query):
     exec_query = query.search_string
@@ -234,13 +268,25 @@ def handle_query(query):
 
     search_array = exec_query_array
     res_list = []
-    while search_array:
-        res = new_match_or(search_array, query.search_string)
-        if res:
-            res_list.append(res)
-        search_array = prune_from_search(search_array, res)
-        print(search_array)
-    print(res_list)
+    res = match_levenshtein(query.search_string)
+    if res:
+        res_list.append(res)
+    if not res:
+        while search_array:
+            res = new_match_or(search_array, query.search_string)
+            print("REsult 1 :", res)
+            if res:
+                res_list.append(res)
+                search_array = prune_from_search(search_array, res)
+            else:
+                break
+            search_array = [e for e in search_array if len(e) > 3]
+            print(search_array)
+            print("RESULTS: :", res_list)
+
+
+    print("Projecting and saving results;")
+    project_results(query, res_list)
 
 
 if __name__ == '__main__':
