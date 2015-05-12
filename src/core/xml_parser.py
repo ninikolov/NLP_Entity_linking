@@ -72,6 +72,7 @@ class QueryParser():
 
 
     def update_segmentation_averages(self):
+        #useful for the segmentation to normalize the amound of words 
         self.avg_word = sum(self.word_count_all)/len(self.word_count_all)
         self.avg_entities = sum(self.entity_count_all)/len(self.entity_count_all)
 

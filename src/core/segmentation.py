@@ -209,7 +209,7 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
     # print("entity_search", search_query.search_string)
 
     c = db_conn.cursor()
-    #delete_stop_words = delete_stop_words(search_query.array)
+    search_query.array = delete_stop_words(search_query.array)
     for i in range(len(search_query.array), 0, -1):  # Try combinations with up to n words
         pos = -1  # position of the words in the string
         for query_term in window(search_query.array, n=i):
@@ -238,15 +238,24 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
                 new_match = SearchMatch(pos, i, entities, option)
                 overlap = check_overlap_simple(new_match, search_query)
                 if overlap:
-                    print("--------------")
-                    print("OVERLAP ", segment_score(new_match, parser),
-                         " vs ",segment_score(overlap, parser))
+                    # print("****-----****-----****-----****-----")
+                    s1 = segment_score(new_match, parser) 
+                    s2 = segment_score(overlap, parser)
+
+                    # print("OVERLAP ", s1,
+                    #      " vs ",s2)
+
                     #check if score of new segment is higher
-                    if segment_score(new_match, parser) < segment_score(overlap, parser):
+                    if s1 < s2:
                         #NO, it isn't ! so ignore 
                         continue
                     #remove old match
                     search_query.search_matches.remove(overlap)
+
+                # overlap = check_overlap(new_match, search_query)
+                # if overlap: 
+                #     continue
+                    
                 new_match.chosen_entity = 0
                 search_query.add_match(new_match)
 
@@ -270,35 +279,33 @@ def segmenter(array):
 def count_prepositions(array):
     tagged = nltk.pos_tag(array)
 
-global word_count_all 
-global entity_count_all 
-
 def segment_score(search_match, parser):
 
-    score = [0,0,0]
+    score = [0,0,0,0]
     #WEIGHT OF SEGMENTATION SCORES ARE DEFINED HERE **
     #First weight : Word count (normalized)
     #Second weight : Amount of entities (normalized)
-    #Third weight : 
-    #weights = [100/parser.avg_word, 1/parser.avg_entities, 1]
+    #Third weight : Lexial Homogeneity 
+    #Fourth weight : Highest Entity Probability 
 
-    #weights = [1/1.5, 380, 3]
+    #weights = [100/parser.avg_word, 1/parser.avg_entities, 1, 1]
+    #weights = [1/1.5, 380, 3, 1]
+    #weights = [1/parser.avg_word, 0, 1.5, 3]
+    weights = [3, 3, 1, 3]
 
-    #FOR NOW the weights do not include the entity count as there seem 
-    #to be no clear pattern
-    weights = [1/parser.avg_word, 0, 1.5]
     score[0] = search_match.word_count
     score[1] = 1/len(search_match.entities)
     score[2] = homogeneity(search_match.substring)
-    #score[3] = search_match.entities[0]
+    score[3] = search_match.entities[0].probability
     parser.word_count_all.append(score[0])
     parser.entity_count_all.append(score[1])
-    color_print(search_match.substring, TermColor.GREEN)
-    color_print("word count score: "+ str(score[0]) + 
-        " (avg " + str(parser.avg_word) + ")")
-    color_print("entities count score: "+ str(score[1])+ 
-        " (avg " + str(parser.avg_entities) + ")")
-    color_print("homogeneity score: "+ str(score[2]))
+    # color_print(search_match.substring, TermColor.GREEN)
+    # color_print("word count score: "+ str(score[0]) + 
+    #     " (avg " + str(parser.avg_word) + ")")
+    # color_print("entities count score: "+ str(score[1])+ 
+    #     " (avg " + str(parser.avg_entities) + ")")
+    # color_print("homogeneity score: "+ str(score[2]))
+    # color_print("probability score: "+ str(score[3]))
     return sum([a*b for a,b in zip(weights,score)])
 
 def homogeneity(string):
@@ -314,8 +321,8 @@ def homogeneity(string):
     counts = defaultdict(int)
     for (word, tag) in tagged:
         counts[tag] += 1
-    print(tagged)
-    print(sorted(counts.items(), key=itemgetter(1), reverse=True))
+    #print(tagged)
+    #print(sorted(counts.items(), key=itemgetter(1), reverse=True))
     return(max(1.5-len(counts.items())/2, 0))
 
 
