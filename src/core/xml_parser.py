@@ -72,11 +72,13 @@ class QueryParser():
         for session in self.soup.find_all("session"):
             session_id = session["id"]
             search_session = SearchSession(session_id)
+
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
                 query_str = query_str.replace('"', "")
+
                 new_query = SearchQuery(query_str, search_session)
-                search_session.append(new_query)
+
                 for ann in query.find_all("annotation"):
                     try:
                         entity_str = unquote(extract_entity_name(ann.find_all("target")[0].text))
@@ -90,15 +92,20 @@ class QueryParser():
                         str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
                                               re.IGNORECASE)
                         position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
+
                         assert (isinstance(position, int))
+
                         new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
+
                     except Exception as e:
-                        print("Couldn't add \"%s\", there was some issue" % query_str)
+                        print("Couldn't add \"%s\" to %s, there was some issue" % (ann, query_str))
                         new_query = None
+
                 if new_query:
                     self.query_array.append(new_query)
+                    search_session.append(new_query)
 
 
 class QueryOutput():
