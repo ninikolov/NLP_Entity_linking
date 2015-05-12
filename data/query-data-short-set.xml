@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <webscope numqueries="528" numsessions="187">
+    <session id="trec-2010-134" numqueries="2">
+        <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false"
+               non-english="false" quote-question="false" starttime="1">
+            <text><![CDATA[poker tournaments]]></text>
+            <annotation main="true">
+                <span><![CDATA[poker tournaments]]></span>
+                <target wiki-id="141837"><![CDATA[http://en.wikipedia.org/wiki/Poker_tournament]]></target>
+            </annotation>
+        </query>
+        <query adult="false" ambiguous="false" assessor="13" cannot-judge="false" navigational="false" no-wp="false"
+               non-english="false" quote-question="false" starttime="2">
+            <text><![CDATA[texas hold em ]]></text>
+            <annotation main="true">
+                <span><![CDATA[texas hold em]]></span>
+                <target wiki-id="75698"><![CDATA[http://en.wikipedia.org/wiki/Texas_hold_'em]]></target>
+            </annotation>
+        </query>
+    </session>
+
     <session id="yahoo-26" numqueries="2">
         <query adult="false" ambiguous="false" assessor="1" cannot-judge="false" navigational="false" no-wp="false"
                non-english="false" quote-question="false" starttime="1">

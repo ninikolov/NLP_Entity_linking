@@ -79,7 +79,7 @@ class QueryParser():
                 search_session.append(new_query)
                 for ann in query.find_all("annotation"):
                     try:
-                        entity_str = extract_entity_name(ann.find_all("target")[0].text)
+                        entity_str = unquote(extract_entity_name(ann.find_all("target")[0].text))
                         entity = Entity(entity_str, 1)
                     except IndexError:  # No true_entities here
                         continue
