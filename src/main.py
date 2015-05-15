@@ -45,7 +45,7 @@ def main():
         #entities = search_entities(query, db_conn)
         evaluate_score(query, parser)
         query.visualize()
-        print("ADDING TO EXORT")
+        #print("ADDING TO EXORT")
         query.add_to_export(exporter)
         #parser.update_segmentation_averages()
 

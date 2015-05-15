@@ -208,6 +208,8 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
     # print(search_query, "\n", search_query.true_entities, "\n \n" )
     # print("entity_search", search_query.search_string)
 
+    del_index = [] #array of positions of deleted stopwords
+
     last_session_id = None
     session_entity_linked = []
     last_query_text = []
@@ -215,7 +217,7 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
     #get_session_info(search_query)
 
     c = db_conn.cursor()
-    search_query.array = delete_stop_words(search_query.array)
+    search_query.array, del_index = delete_stop_words(search_query.array)
     for i in range(len(search_query.array), 0, -1):  # Try combinations with up to n words
         pos = -1  # position of the words in the string
         for query_term in window(search_query.array, n=i):
@@ -265,10 +267,26 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
                 new_match.chosen_entity = 0
                 search_query.add_match(new_match)
 
+    # #readjust the entitie's position
+    # for match in search_query.search_matches:
+    #     for del_ind in del_index:
+    #         if (del_ind <= match.position):
+    #             match.position += 1
+                
+
 def delete_stop_words(array):
-    stop_words = set(('and', 'or', 'not', 'for', 'in'))
-    new = [word for word in array if word not in stop_words]
-    return new
+    stop_words = set(('and', 'or', 'not', 'for', 'in', 'why', 'is', 'how', 
+        'do', 'has', 'to'))
+    del_index = []
+    for word in array:
+        if word in stop_words:
+            del_index.append(array.index(word))
+            array.remove(word)
+
+    return array, del_index
+
+    # new = [word for word in array if word not in stop_words]
+    # return new
 
 def segmenter(array):
 
