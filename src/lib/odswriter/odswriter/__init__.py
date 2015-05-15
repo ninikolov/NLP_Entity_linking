@@ -141,7 +141,7 @@ class Sheet(object):
             row.appendChild(cell)
             if cell_opts.get('span'):
                 n_span = cell_opts['span']
-                for i in range(0, int(n_span) - 1):
+                for i in range(0, int(n_span) - 1   ):
                     row.appendChild(self.dom.createElement("table:covered-table-cell"))
 
         self.table.appendChild(row)

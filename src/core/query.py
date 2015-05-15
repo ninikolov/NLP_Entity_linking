@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
+
 from urllib.request import unquote
 
 import wikipedia
@@ -14,7 +16,8 @@ EXPORT_COLORS = {
     "FN": "blue",
     "FP": "red",
     "TP-relaxed": "yellow",
-    "TP-strict": "green"
+    "TP-strict": "green",
+    "FP-Corresponding_true_entity": "red"
 }
 
 
@@ -147,8 +150,6 @@ class SearchQuery(object):
         print("-" * 80 + "\n")
 
     def add_to_export(self, exporter):
-        from collections import OrderedDict
-
         search = OrderedDict()
         for a in self.array:
             search[a] = {}
@@ -161,30 +162,46 @@ class SearchQuery(object):
         m = list(self.search_matches)
         m.sort(key=lambda s: s.position)
 
+        curr_pos = 0
         for a in m:
+
+            if a.position > curr_pos:
+                for i in range(0, a.position - curr_pos):
+                    res["-" * (curr_pos + i + 1)] = {}
+                curr_pos = a.position
+
             ent = a.get_chosen_entity()
+
             if ent:
                 res[ent.link] = {
                     "link": "http://en.wikipedia.org/wiki/" + ent.link,
                     "span": a.word_count,
-                    "bg": EXPORT_COLORS[a.rating]
+                    "bg":   EXPORT_COLORS[a.rating]
                 }
+            curr_pos += a.word_count
 
         exporter.append_row(res)
+
         true_res = OrderedDict()
+
         m = list(self.true_entities)
         m.sort(key=lambda s: s.position)
-        print("\n\n", self.search_string)
+
+        curr_pos = 0
+
         for t in m:
-            # print("True Ent: ", t)
+            if t.position > curr_pos:
+                for i in range(0, t.position - curr_pos):
+                    true_res["-" * (curr_pos + i + 1)] = {}
+                curr_pos = t.position
+
             ent = t.get_chosen_entity()
-            # print(ent.link, t.word_count, t.position)
-            print(ent.link, t.word_count, t.position)
             if ent:
                 true_res[ent.link] = {
                     "link": "http://en.wikipedia.org/wiki/" + ent.link,
                     "span": t.word_count
                 }
+            curr_pos += t.word_count
 
         exporter.append_row(true_res)
 
@@ -196,14 +213,11 @@ class SearchMatch(object):
         self.word_count = word_count
         self.entities = entities
         self.chosen_entity = -1  # a positive number indicates array index
-        # of chosen entity, -1 == no entity chosen
+                                 # of chosen entity, -1 == no entity chosen
         self.rating = ""  # "TP-strict", "TP-relaxed", "FP", "FN"
 
     def __repr__(self):
-        # try:
         return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, [e for e in self.entities])
-        # except IndexError:
-        # return "<SearchMatch: %s>[%r]<\\SearchMatch>" % (self.substring, [e for e in self.entities])
 
     def get_chosen_entity(self):
         if self.entities and self.chosen_entity >= 0:
@@ -227,14 +241,7 @@ class SearchMatch(object):
         self.entities = [self.entities[self.chosen_entity]]
         self.chosen_entity = 0 if self.chosen_entity > -1 else -1
 
-        # def choose_best_match(self):
-        # """
-        # """
-        # return self.substring, self.entities[0]
-
-
 entity_correction_mapper = {}
-
 
 class Entity(object):
     def __init__(self, link, probability):

@@ -20,7 +20,7 @@ from core.segmentation import segmentation
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-dev-set.xml")
+                    default="query-data-short-set.xml")
 
 args = parser.parse_args()
 
@@ -42,8 +42,10 @@ def main():
         query.spell_check()
         for true_match in query.true_entities:
             true_match.get_chosen_entity().validate()
+        #entities = search_entities(query, db_conn)
         evaluate_score(query, parser)
         query.visualize()
+        print("ADDING TO EXORT")
         query.add_to_export(exporter)
         #parser.update_segmentation_averages()
 

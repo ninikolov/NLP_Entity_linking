@@ -208,6 +208,12 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
     # print(search_query, "\n", search_query.true_entities, "\n \n" )
     # print("entity_search", search_query.search_string)
 
+    last_session_id = None
+    session_entity_linked = []
+    last_query_text = []
+    diff_session_query = []
+    #get_session_info(search_query)
+
     c = db_conn.cursor()
     search_query.array = delete_stop_words(search_query.array)
     for i in range(len(search_query.array), 0, -1):  # Try combinations with up to n words
@@ -299,6 +305,7 @@ def segment_score(search_match, parser):
     score[3] = search_match.entities[0].probability
     parser.word_count_all.append(score[0])
     parser.entity_count_all.append(score[1])
+
     # color_print(search_match.substring, TermColor.GREEN)
     # color_print("word count score: "+ str(score[0]) + 
     #     " (avg " + str(parser.avg_word) + ")")
@@ -325,5 +332,60 @@ def homogeneity(string):
     #print(sorted(counts.items(), key=itemgetter(1), reverse=True))
     return(max(1.5-len(counts.items())/2, 0))
 
+
+# def get_session_info(query):
+#     """
+#     Get the following data out of the sessions: 
+#     - basically all entities maped so far in the session stored in session_entity_linked
+#     - stores also the sting difference between the last two queries in the array of strings diff_session_query 
+#     """
+#     current_session_id = query.session.session_id
+#     #need global keyword to modify global var
+#     global last_session_id
+#     global session_entity_linked
+#     global last_query_text
+#     global diff_session_query
+
+
+#     # case same session as last one
+#     if (last_session_id == current_session_id):
+#         actual_entity_linked = query.get_chosen_entities()
+#         for i in range(len(actual_entity_linked)):
+#             is_duplicate = False;
+#             for j in range(len(session_entity_linked)):
+#                 #don t store duplicate
+#                 if (actual_entity_linked[i].link == session_entity_linked[j]):
+#                     is_duplicate = True
+#                     break
+#             if ( not is_duplicate): session_entity_linked.append(actual_entity_linked[i].link)
+
+
+#         # diff between last two queries (only added ones to last query),  but beware spellings matters since simple string comparison!
+#         diff_session_query = []
+#         for i in range(len(query.array)):
+#             new_word = True
+#             for j in range(len(last_query_text)):
+#                 if (last_query_text[j] == query.array[i]):
+#                     new_word = False
+#                     break
+#             if (new_word):
+#                 diff_session_query.append(query.array[i])
+
+#         last_query_text = query.array
+#         return
+
+
+#     # case different session or first one
+#     else:
+#         last_session_id = current_session_id
+#         # empty list
+#         session_entity_linked = []
+#         actual_entity_linked = query.get_chosen_entities()
+#         for i in range(len(actual_entity_linked)):
+#             session_entity_linked.append(actual_entity_linked[i].link)
+#         # for diff
+#         last_query_text = query.array
+#         diff_session_query = []
+#         return
 
 
