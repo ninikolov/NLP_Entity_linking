@@ -15,6 +15,7 @@ from .query import SearchQuery, SearchMatch, Entity, SearchSession
 # session -> mult. query
 
 FIX_STRING = False
+IGNORE_NO_MENTIONS = True
 
 wiki_base = "http://en.wikipedia.org/wiki/"
 
@@ -69,6 +70,7 @@ class QueryParser():
         Both Currently 0 by default
         """
         self.query_array = []
+        ignore_count = 0 # queries we ignored because they have no mentions
         for session in self.soup.find_all("session"):
             session_id = session["id"]
             search_session = SearchSession(session_id)
@@ -86,6 +88,7 @@ class QueryParser():
                 new_query = SearchQuery(query_str, search_session)
                 new_query.with_double_quotes = unquote(query.find_all("text")[0].text)
                 curr_pos = 0
+                num_mentions = 0
                 for ann in query.find_all("annotation"):
                     ann_spann = ann.span
                     try:
@@ -110,17 +113,22 @@ class QueryParser():
                         new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
+                        num_mentions += 1
                     except Exception as e:
                         print("Couldn't add \"%s\" to %s, there was some issue" % (ann, query_str))
                         new_query = None
 
-                print(ann.find_all("span")[0].text.split(), curr_pos)
+                #print(ann.find_all("span")[0].text.split(), curr_pos)
 
                 if new_query:
+                    if IGNORE_NO_MENTIONS and not num_mentions > 0:
+                        ignore_count += 1
+                        continue
                     self.query_array.append(new_query)
                     print(new_query)
                     print(new_query.true_entities)
                     search_session.append(new_query)
+        print("Number of queries ignored (no mentions):", ignore_count)
 
 
 class QueryOutput():
