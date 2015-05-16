@@ -250,6 +250,17 @@ def get_session_info(query):
 from algorithms.tagme import *
 import copy
 
+def get_confidence_score(query,total_coh):
+    
+    # hom many (non stop) words of initial query are matched (ratio)
+    #ignore stop words?
+    ratio_score=len(query.get_chosen_entities())/(len(query.array));
+    
+    #also use coherence score from pruning
+    weight_coh=1.3
+    weight_ratio=1
+    confidence_score=total_coh*weight_coh+ratio_score*weight_ratio/(weight_coh+weight_ratio)
+    return confidence_score
 
 def combined():
     """
@@ -304,7 +315,12 @@ def combined():
         for true_match in query_dyn.true_entities:
             true_match.get_chosen_entity().validate()
         final, total_coh_dyn = prune(query_dyn, theta=0.25)
-
+        
+        confidence_score_dyn=get_confidence_score(query_dyn,total_coh_dyn)
+        print("Conficdence score for dynamic solution ",confidence_score_dyn)
+        
+        confidence_score_tagme=get_confidence_score(query_tagme,total_coh_tagme)
+        print("Conficdence score for tagme solution ",confidence_score_tagme)
         print("Coh of Tagme:", total_coh_tagme)
         print("Coh of Dynamic:", total_coh_dyn)
         if total_coh_tagme > total_coh_dyn:
