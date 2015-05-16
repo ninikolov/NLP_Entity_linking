@@ -44,15 +44,15 @@ def get_score(substr1, match_elems):
 
 
 def score(elems, matches):
-    prev_match_score = 0
+    prev_match_score = prev_match_length = 0
     chosen = ''
     elems = [elem for elem in elems if elem != '|']
     elem_string = " ".join(elems)
-    print(elem_string)
+    # print(elem_string)
     match_elems = [match[1].replace('_', ' ').lower().split() for match in matches]
     potential_max_score = len(elem_string)
     # print(match_elems)
-    chosen_idx = None
+    chosen_idx = 0
     max_psql_score = matches[0][2] # sorted by score
     for idx, match in enumerate(match_elems):
         curr_match = matches[idx]
@@ -88,16 +88,16 @@ def score(elems, matches):
                 # dont add
                 pass
             else:
-                print(match_score, matches[idx])
-                pprint(match_elems[idx])
-                pprint(elems)
+                # print(match_score, matches[idx])
+                # pprint(match_elems[idx])
+                # pprint(elems)
                 chosen = matches[idx]
                 chosen_idx = idx
                 prev_match_score = match_score
-    print(matches)
+    # print(matches)
     # if not chosen_idx:
     #     return None
-
+    # print(matches)
     return (matches[chosen_idx], match_score)
 
 
@@ -123,7 +123,7 @@ def get_match_or_redirect(el):
     cur2 = conn.cursor()
 
     if type(el) == list or type(el) == tuple:
-        print("GETTING A MATCH .. .", el)
+        # print("GETTING A MATCH .. .", el)
         res = el[1]
         cur2.execute("""select redirect.rd_title from redirect where rd_from = %s""", (el[0], ))
         rd = cur2.fetchone()
@@ -134,7 +134,7 @@ def get_match_or_redirect(el):
     elif type(el) == str:
         cur2.execute("""select redirect.rd_title from redirect where rd_from = %s""", (el, ))
         rd = cur2.fetchone()
-        print(rd)
+        # print(rd)
         if rd:
             return rd[0].replace("''", "'")
         else:
@@ -171,6 +171,18 @@ def match_levenshtein(exec_query):
             res = el[2]
         print("RESULT from levenshtein. ", res)
 
+    return get_match_or_redirect(el)
+
+
+def match_direct(exec_query):
+    cur = conn.cursor()
+    query_string_fast = cur.mogrify("""select page.page_id,  page.page_title, redirect.rd_title
+        from page
+        left outer join redirect on redirect.rd_from = page.page_id
+        where lower(%s) = lower(page.page_title_with_spaces)
+    """, (exec_query, )
+    )
+    el = postgres_cached(query_string_fast, ps.FETCHONE)
     return get_match_or_redirect(el)
 
 
@@ -225,6 +237,6 @@ def match_or(exec_query_array):
     els = postgres_cached(query_string, ps.FETCHALL)
     if els:
         el, match_score = score(exec_query.split(), els)
-        print(el, match_score)
+        # print(el, match_score)
         # TODO: add function to check score height
         return(get_match_or_redirect(el))

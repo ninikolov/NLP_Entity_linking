@@ -75,13 +75,11 @@ class QueryParser():
 
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
-                print(query_str)
+
                 # Replacing quotes for now
                 # They could be potentially useful for queries as with quotes it's known the words
                 # have to be connected by an &
                 query_str = query_str.replace('"', '')
-                if '"' in query_str:
-                    print("HAS a quote in it: ", query_str)
 
                 new_query = SearchQuery(query_str, search_session)
                 new_query.with_double_quotes = unquote(query.find_all("text")[0].text)
@@ -114,12 +112,8 @@ class QueryParser():
                         print("Couldn't add \"%s\" to %s, there was some issue" % (ann, query_str))
                         new_query = None
 
-                print(ann.find_all("span")[0].text.split(), curr_pos)
-
                 if new_query:
                     self.query_array.append(new_query)
-                    print(new_query)
-                    print(new_query.true_entities)
                     search_session.append(new_query)
 
 

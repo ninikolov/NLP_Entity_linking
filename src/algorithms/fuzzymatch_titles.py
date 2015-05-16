@@ -138,7 +138,7 @@ def new_match_or(exec_query_array, evaluate):
         # match_score = sc[1]
         # print(el, match_score)
         # # TODO: add function to check score height
-        print(els[0])
+        # print(els[0])
         return(get_match_or_redirect(els[0]))
 
 
@@ -288,6 +288,27 @@ def handle_query(query):
     print("Projecting and saving results;")
     project_results(query, res_list)
 
+def handle_query_fast(query):
+    res = match_levenshtein(query.search_string)
+    if not res:
+        res = match_all(query.array)
+    return res
+
+def non_overlapping_dm(query):
+    matches = {}
+    if len(query.array) > 3:
+        l = 3
+    else:
+        l = len(query.array)
+    for j in range(0, l):
+        for i in window(query.array, j):
+            matches[" ".join(i)] = match_direct(" ".join(i))
+            print("Matching ", i, j)
+    return matches
+
+def or_all(query):
+    match = match_or(query.array)
+    return match
 
 if __name__ == '__main__':
     deabbreviate('bbt')

@@ -44,20 +44,18 @@ def init_wikidata(data_dir):
 
                 all_break_words += break_words
 
-    print(all_break_words)
+    # print(all_break_words)
 
     with open(data_dir + 'wikidata_properties.pickle', 'wb+') as pickle_file:
         marshal.dump((all_break_words, all_properties), pickle_file)
 
 
 def query_wiki(q_a, searched_props):
-    print("Searching the schnitzel  w")
     query   = " ".join(q_a)
-    print(query)
     res = match_or(q_a)
 
-    print("RESULT: ", res)
-    print(WD_PROP_QUERY.format(entity_title=res))
+    # print("RESULT: ", res)
+    # print(WD_PROP_QUERY.format(entity_title=res))
     props = requests.get(WD_PROP_QUERY.format(entity_title=res))
     props = props.json()
     claim = []
@@ -65,12 +63,12 @@ def query_wiki(q_a, searched_props):
         claims = matched_ent.get('claims')
         if not claims:
             return []
-        pprint(claims.keys())
+        # pprint(claims.keys())
         for searched_prop in searched_props:
             if searched_prop in claims:
                 print("WE AHVE SDJ SKDJ SAKDJ SJ JKD J")
                 claim  += claims[searched_prop]
-                pprint(claims[searched_prop])
+                # pprint(claims[searched_prop])
     results = []
     if claim:
         for c in claim:
@@ -80,22 +78,25 @@ def query_wiki(q_a, searched_props):
                 res = requests.get(WD_URL.format(entity='Q'+str(did)))
                 res = res.json()
                 for entity in res['entities'].values():
-                    results.append(entity['sitelinks']['enwiki']['title'].replace(' ', '_'))
+                    try:
+                        results.append(entity['sitelinks']['enwiki']['title'].replace(' ', '_'))
+                    except:
+                        print("WHATTTTTTTTd")
             elif snak['datatype'] == 'time':
                 results.append(snak['datavalue']['value']['time'])
-            pprint(results)
+            # pprint(results)
     print("This is the result: ", results)
     return results
 
 
 
 def find_breakword(elem):
-    print(elem)
     if len(elem) <= 3:
         return None
     for break_word in all_break_words:
         if (elem.startswith(break_word) or break_word.startswith(elem)) and abs(len(elem) - len(break_word)) <= 2:
-            print("\n\n\n\n\nLENGHT: ", abs(len(elem) - len(break_word)))
+            # print("\n\n\n\n\nLENGHT: ", abs(len(elem) - len(break_word)))
+            print("Matched breakword: %s to %s" % (break_word, elem))
             return break_word
     return None
 
@@ -105,6 +106,9 @@ def check_wiki_data(query_array):
         bw = find_breakword(elem)
         if bw:
             query_without_breakword = [e for e in query_array if e != elem]
+            for idx, el in enumerate(query_without_breakword):
+                if el.endswith('s'):
+                    query_without_breakword[idx] = el[0:len(el) - 1]
             search_props = []
             for key, val in all_properties.items():
                 if bw in val['break_words']:
@@ -112,8 +116,14 @@ def check_wiki_data(query_array):
             return query_wiki(query_without_breakword, search_props)
     return None
 
-if __name__ == '__main__':
-    init_wikidata('../data/')
+def run_tests():
     # check_wiki_data("siblings of michael jackson".split())
     # check_wiki_data("birthplace of van gogh".split())
-    check_wiki_data("wife of barack obama".split())
+    # check_wiki_data("wife of barack obama".split())
+    # check_wiki_data("birthday of pep guardiola".split())
+    #
+    check_wiki_data("actor of Inglourious Basterds".split())
+
+if __name__ == '__main__':
+    init_wikidata('../data/')
+    run_tests()

@@ -16,10 +16,11 @@ import core.query
 from core.export import Export
 # from baseline.baseline import search_entities
 from core.segmentation import search_entities
-from algorithms.wikidata import check_wiki_data
+import algorithms.wikidata
+from algorithms.wikidata import check_wiki_data, init_wikidata
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-dev-set.xml")
+                    default="query-data-test-set-unlabelled.xml")
 
 args = parser.parse_args()
 
@@ -37,9 +38,12 @@ def main():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
     exporter = Export()
+    init_wikidata('../data/')
     for query in parser.query_array:
-        print(check_wiki_data(query.array))
-
+        # print(query.array)
+        res = check_wiki_data(query.array)
+        if res:
+            print(query.query_string, res)
     # exporter.export()
     # print_F1(parser)
     #
