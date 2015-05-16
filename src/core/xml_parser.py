@@ -54,6 +54,13 @@ class QueryParser():
         # true positive, flase positives and false negatives (calculated in score.py>calc_tp_fp_fn)
         self.tp_s = self.tp_l = self.fp = self.fn = 0
 
+        # these numbers are used for the segmentation. They are the average of the word counts
+        # and entity counts over all the parser and are used in the scoring function of each segment.
+        self.word_count_all = []
+        self.entity_count_all = []
+        self.avg_word = 1
+        self.avg_entities = 1
+
         # amount of queries and matches checked (also calculated in score.py>calc_tp_fp_fn)
         self.total_matches = 0
         self.queries_with_some_identical_true_entities = 0
@@ -63,6 +70,16 @@ class QueryParser():
         :return: An array with the text of the queries
         """
         return [a.__repr__() for a in self.query_array]
+
+
+    def update_segmentation_averages(self):
+        #useful for the segmentation to normalize the amound of words 
+        self.avg_word = sum(self.word_count_all)/len(self.word_count_all)
+        self.avg_entities = sum(self.entity_count_all)/len(self.entity_count_all)
+
+    def print_segmentation_stat(self):
+        print ("average word count : ", self.avg_word)
+        print ("average entity count : ", self.avg_entities)
 
     def _build_queries(self):
         """Populate our array of SearchQuery items.
@@ -77,56 +94,43 @@ class QueryParser():
 
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
-                print(query_str)
-                # Replacing quotes for now
-                # They could be potentially useful for queries as with quotes it's known the words
-                # have to be connected by an &
-                query_str = query_str.replace('"', '')
-                if '"' in query_str:
-                    print("HAS a quote in it: ", query_str)
+                query_str = query_str.replace('"', "")
 
                 new_query = SearchQuery(query_str, search_session)
+
                 new_query.with_double_quotes = unquote(query.find_all("text")[0].text)
                 curr_pos = 0
                 num_mentions = 0
                 for ann in query.find_all("annotation"):
-                    ann_spann = ann.span
                     try:
-                        entity_str = unquote(extract_entity_name(ann.find_all("target")[0].text))
+                        entity_str = extract_entity_name(ann.find_all("target")[0].text)
                         entity = Entity(entity_str, 1)
                     except IndexError:  # No true_entities here
-                        curr_pos += len(ann.find_all("span")[0].text.split())
-
                         continue
                     try:
                         match_str = unquote(ann.find_all("span")[0].text)
                         match_str = match_str.replace('"', "")
                         # find the amount of word separators in the string before the occurence of span
-                        # str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
-                        #                       re.IGNORECASE)
-                        # position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
-                        position = curr_pos
-                        curr_pos += len(ann.find_all("span")[0].text.split())
+                        str_before = re.match(r"\W*(.*)%s" % match_str, new_query.search_string.replace('"', ""),
+                                              re.IGNORECASE)
+                        position = len(re.findall(r"[\W]+", str_before.group(1), re.IGNORECASE))
 
                         assert (isinstance(position, int))
 
                         new_match = SearchMatch(position, len(match_str.split()), [entity], match_str)
                         new_match.chosen_entity = 0
                         new_query.true_entities.append(new_match)
+
                         num_mentions += 1
                     except Exception as e:
                         print("Couldn't add \"%s\" to %s, there was some issue" % (ann, query_str))
                         new_query = None
-
-                #print(ann.find_all("span")[0].text.split(), curr_pos)
 
                 if new_query:
                     if IGNORE_NO_MENTIONS and not num_mentions > 0:
                         ignore_count += 1
                         continue
                     self.query_array.append(new_query)
-                    print(new_query)
-                    print(new_query.true_entities)
                     search_session.append(new_query)
         print("Number of queries ignored (no mentions):", ignore_count)
 

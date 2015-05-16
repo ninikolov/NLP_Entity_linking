@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 class TermColor:
    PURPLE = '\033[95m'
    CYAN = '\033[96m'
@@ -11,3 +12,6 @@ class TermColor:
    BOLD = '\033[1m'
    UNDERLINE = '\033[4m'
    END = '\033[0m'
+
+def color_print(string, color = TermColor.BLUE):
+   print("{0}{1}{2}".format(color, string, TermColor.END))

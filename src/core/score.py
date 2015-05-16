@@ -43,7 +43,7 @@ def evaluate_score(query, parser, use_chosen_entity=False):
                     parser.tp_s += 1 
                     #print("2 strict")
                 else:
-                    match.rating = true_match.rating = "TP-relaxed"
+                    match.rating = true_match.rating = "TP-relaxed" 
                     parser.tp_l += 1
                     #print("2 relaxed")
                 is_matched = True
