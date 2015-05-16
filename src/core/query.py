@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+"""
+Query classes
+"""
+
 from collections import OrderedDict
 
 from urllib.request import unquote

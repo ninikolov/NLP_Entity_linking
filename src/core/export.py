@@ -45,4 +45,4 @@ class Export():
         with ods_writer(open(filename + "." + filetype,"wb")) as odsfile:
             for row in self.data:
                 odsfile.writerow(row)
-        self.save_new_diff()
+        # self.save_new_diff()

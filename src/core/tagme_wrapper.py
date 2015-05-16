@@ -101,14 +101,19 @@ def position(query, start_ch):
     q_array = query.split()
     curr = 0
     start = -1
-    for word in range(len(q_array)):
-        for letter in range(len(q_array[word])):
-            if letter + curr < start_ch:
+    for w_ind in range(len(q_array)): # word
+        for l_ind in range(len(q_array[w_ind])): # letter
+            #print(l_ind + curr + 1)
+            if l_ind + curr + 1 < start_ch:
                 continue
             else:
-                start = word
-        curr += len(q_array[word]) + 1
-    assert start >= 0
+                start = w_ind
+        curr += len(q_array[w_ind]) + 1
+    try:
+        assert start >= 0
+    except AssertionError:
+        print(q_array, len(query), start_ch, curr)
+        raise AssertionError
     return start
 
 def tag(query):

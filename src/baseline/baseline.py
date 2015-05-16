@@ -1,25 +1,45 @@
 # -*- coding: utf-8 -*-
 
 """
-Baseline code
+First baseline code & segmentation
 """
 
-import marshal
+import argparse
+import os
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
 from core.segmentation import window, check_overlap
 from core.query import Entity, SearchMatch
-#from main import main
+from core.xml_parser import QueryParser, load_dict
+from core.score import evaluate_score, print_F1
+from core.export import Export
+import marshal
+
+sys.path.append("./lib/odswriter/")
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--testfile", "-t", help="Select XML file",
+                    default="query-data-dev-set.xml")
+
+args = parser.parse_args()
+
+THIS_FILE = os.path.realpath(__file__)
+THIS_DIR = os.path.dirname(THIS_FILE)
+DATA_DIR = THIS_DIR + "/../../data/"
+TRAIN_XML = args.testfile
+DICT = "crosswikis-dict-preprocessed" # Original crosswiki
+# DICT = "crosswikis-dict-preprocessed_new" # New Crosswiki
 
 
-def search_entities(search_query, db_conn, take_largest=True):
+def segmentation_baseline(search_query, db_conn, take_largest=True):
     """
+    Basic segmentation
     :param search_string:
     :param db_conn:
     :return:
     """
-    # search_query = SearchQuery(search_string)
-    # print(search_query, "\n", search_query.true_entities, "\n \n" )
-    # print("entity_search", search_query.search_string)
 
     c = db_conn.cursor()
     for i in range(3, 0, -1):  # Try combinations with up to 3 words
@@ -35,12 +55,24 @@ def search_entities(search_query, db_conn, take_largest=True):
                 continue
             # Create a match with all entities found
             new_match = SearchMatch(pos, i, entities, query_term)
-            if take_largest:
+            if take_largest: # take largest match
                 if check_overlap(new_match, search_query):
                     continue
-            new_match.chosen_entity = 0
+            new_match.chosen_entity = 0 # choose first entity
             search_query.add_match(new_match)
 
 
-if __name__ == "__main__":
-    main()
+def run():
+    parser = QueryParser(DATA_DIR + TRAIN_XML)
+    db_conn = load_dict(DATA_DIR + DICT)
+    exporter = Export()
+    for query in parser.query_array:
+        segmentation_baseline(query, db_conn)
+        evaluate_score(query, parser)
+        query.visualize()
+    exporter.export()
+    parser.print_segmentation_stat()
+    print_F1(parser)
+
+if __name__ == '__main__':
+    run()

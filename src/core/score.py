@@ -2,6 +2,7 @@
 
 from core.helper import TermColor
 
+
 def evaluate_score(query, parser, use_chosen_entity=False):
     """
     :param query:
@@ -29,7 +30,7 @@ def evaluate_score(query, parser, use_chosen_entity=False):
                 match_entity = match.get_chosen_entity()
             else:  # Take first entity
                 match_entity = match.entities[0]
-            #print("2: true_match: ",get_entity_name(true_match.entities[0].link))
+            # print("2: true_match: ",get_entity_name(true_match.entities[0].link))
             if (match_entity.link == true_match.entities[0].link):
                 #assert(not is_matched) #There should not be 2 identical true_entities
                 if is_matched == True:
@@ -40,10 +41,10 @@ def evaluate_score(query, parser, use_chosen_entity=False):
 
                 if (match.substring == true_match.substring):
                     match.rating = true_match.rating = "TP-strict"
-                    parser.tp_s += 1 
+                    parser.tp_s += 1
                     #print("2 strict")
                 else:
-                    match.rating = true_match.rating = "TP-relaxed" 
+                    match.rating = true_match.rating = "TP-relaxed"
                     parser.tp_l += 1
                     #print("2 relaxed")
                 is_matched = True
@@ -65,17 +66,17 @@ def evaluate_score(query, parser, use_chosen_entity=False):
             else:
                 match_entity = match.entities[0]
             if (match_entity.link == true_match.entities[0].link):
-                #assert(not is_matched) #There should not be 2 identical search_matches
+                # assert(not is_matched) #There should not be 2 identical search_matches
                 is_matched = True
 
             if (match.rating == "FP"):
-                if (true_match.position >= match.position and true_match.position + true_match.word_count 
+                if (true_match.position >= match.position and true_match.position + true_match.word_count
                     <= match.position + match.word_count):
-                    #print(true_match, "instead of :" ,match) 
+                    # print(true_match, "instead of :" ,match)
                     #if the real match is located within the location of an other FP, then we dont 
                     #count it as a FN, otherwise we would have 2 errors per wrong assigement
                     true_match.rating = "FP-Corresponding_true_entity"
-                    
+
         if not (is_matched or true_match.rating == "FP-Corresponding_true_entity"):
             parser.fn += 1
             true_match.rating = "FN"
@@ -109,9 +110,11 @@ def print_F1(parser):
         print("{0:<15} | {1:12} | {2:12} | {3:12}".format("SCORE", "precision", "recall", "F1"))
         print("-" * 60, "\n{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("relaxed",
                                                                             round(precision_l, 4), round(recall_l, 4),
-                                                                            TermColor.BOLD, round(f1_l, 4), TermColor.END))
+                                                                            TermColor.BOLD, round(f1_l, 4),
+                                                                            TermColor.END))
         print("{0:<15} | {1:12} | {2:12} | {3}{4:12}{5}".format("STRICT",
-                                                                round(precision_s, 4), round(recall_s, 4), TermColor.BOLD,
+                                                                round(precision_s, 4), round(recall_s, 4),
+                                                                TermColor.BOLD,
                                                                 round(f1_s, 4), TermColor.END))
         print("*" * 60)
         return f1_s

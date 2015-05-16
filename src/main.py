@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-First baseline
+File for playing with things
+First baseline is in baseline.baseline.py
+Other approaches are in the algorithms package
 """
 
 import os
@@ -17,10 +19,11 @@ import core.query
 from core.export import Export
 #from baseline.baseline import search_entities
 from core.segmentation import segmentation
+from algorithms.tagme import prune
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-short-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
@@ -28,7 +31,7 @@ THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../data/"
 TRAIN_XML = args.testfile
-DICT = "crosswikis-dict-preprocessed"
+DICT = "crosswikis-dict-preprocessed_new"
 WIKI_NAMES = "enwiki-latest-all-e-in-ns0"
 
 ENTITY_CHECKER_MAP = "entity_map"

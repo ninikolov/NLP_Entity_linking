@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.par
 from core.tagme_wrapper import *
 from core.xml_parser import load_dict, QueryParser
 
-from core.segmentation import search_entities
+from core.segmentation import segmentation
 from core.score import evaluate_score, print_F1
 from algorithms.tagme import prune
 
@@ -247,20 +247,94 @@ def get_session_info(query):
         diff_session_query = []
         return
 
+from algorithms.tagme import *
+import copy
 
-if __name__ == '__main__':
+
+def combined():
+    """
+    A combination of the Dynamic Programming approach and TAGME.
+    :return:
+    """
+    parser = QueryParser(DATA_DIR + TRAIN_XML)
+    writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-tagme."))
+    db_conn = load_dict(DATA_DIR + DICT, fix=False)
+    exporter = Export()
+
+    tagme_count = 0
+    dyn_count = 0
+    same = 0
+
+    for query in parser.query_array:
+        query_tagme = copy.deepcopy(query)
+        query_dyn = copy.deepcopy(query)
+
+        query_dyn.spell_check()
+        query_tagme.spell_check()
+        entities = segmentation(query_tagme, db_conn, parser, take_largest=True)
+        entities = segmentation(query_dyn, db_conn, parser, take_largest=True)
+
+        # Tagme
+        for index in range(len(query_tagme.search_matches)):  # for each match
+            choose_entity(query_tagme.search_matches[index], query_tagme.search_matches, index)
+        for match in query_tagme.search_matches:
+            try:
+                match.get_chosen_entity().validate()
+            except:
+                continue
+        for true_match in query_tagme.true_entities:
+            true_match.get_chosen_entity().validate()
+        final, total_coh_tagme = prune(query_tagme)
+
+        # DP
+        get_session_info(query_dyn)
+        # pdb.set_trace() #for debugging
+
+        # stores state matrix
+        state_matrix = []
+        build_dynamic_prog_matrix(query_dyn.search_matches, state_matrix, session_entity_linked)
+
+        # reconstruct best solution
+        reconstruct_best_solution(state_matrix, query_dyn.search_matches)
+        for match in query_dyn.search_matches:
+            try:
+                match.get_chosen_entity().validate()
+            except:
+                continue
+        for true_match in query_dyn.true_entities:
+            true_match.get_chosen_entity().validate()
+        final, total_coh_dyn = prune(query_dyn, theta=0.25)
+
+        print("Coh of Tagme:", total_coh_tagme)
+        print("Coh of Dynamic:", total_coh_dyn)
+        if total_coh_tagme > total_coh_dyn:
+            query = query_tagme
+            tagme_count += 1
+        elif total_coh_tagme == total_coh_dyn:
+            query = query_tagme
+            same += 1
+        else:
+            query = query_dyn
+            dyn_count += 1
+
+        evaluate_score(query, parser, use_chosen_entity=True)
+        query.visualize()
+        query.add_to_export(exporter)
+        writer.write_query(query)
+    exporter.export()
+    writer.commit()
+
+    print("Combined solution.")
+    print("Times we chose TAGME:", tagme_count, "; Dynamic:", dyn_count, "same score:", same)
+    return print_F1(parser)
+
+def dynamic():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
 
-    # initlialize data for session info
-    last_session_id = None
-    session_entity_linked = []
-    last_query_text = []
-    diff_session_query = []
-
     for query in parser.query_array:
         query.spell_check()
-        entities = search_entities(query, db_conn)
+        segmentation(query, db_conn, parser, take_largest=True)
         # print("Search matches: ", query.search_matches)
         get_session_info(query)
         # pdb.set_trace() #for debugging
@@ -272,7 +346,7 @@ if __name__ == '__main__':
         # reconstruct best solution
         reconstruct_best_solution(state_matrix, query.search_matches)
         # Pruning from the Tagme implementation
-        final = prune(query, theta=0.2)
+        final, total_coh = prune(query, theta=0.2)
         # print("Final entities after pruning: ", final)
 
         for match in query.search_matches:
@@ -284,9 +358,21 @@ if __name__ == '__main__':
             true_match.get_chosen_entity().validate()
 
         evaluate_score(query, parser, use_chosen_entity=True)
+        print("Coherence of query:", total_coh)
         query.visualize()
 
     # evaluate solution
     print("Dynamic solution results:")
     print("Times we chose voted entity:", COUNTER, "out of", len(parser.query_array), "queries.")
     print_F1(parser)
+
+
+if __name__ == '__main__':
+    # initlialize data for session info
+    last_session_id = None
+    session_entity_linked = []
+    last_query_text = []
+    diff_session_query = []
+
+    # dynamic()
+    combined()

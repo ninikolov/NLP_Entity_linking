@@ -22,7 +22,7 @@ from baseline.baseline import segmentation_baseline
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-dev-set.xml")
+                    default="query-data-train-set.xml")
 
 args = parser.parse_args()
 
@@ -42,6 +42,7 @@ def main():
     for query in parser.query_array:
         query.spell_check()
         segmentation(query, db_conn, parser)
+        # Validate entity names
         for true_match in query.true_entities:
             true_match.get_chosen_entity().validate()
         for match in query.search_matches:
@@ -49,7 +50,7 @@ def main():
                 match.get_chosen_entity().validate()
             except:
                 continue
-        prune(query, theta=0.2)
+        prune(query, theta=0.2) # TAGME pruning
         evaluate_score(query, parser)
         query.visualize()
         query.add_to_export(exporter)

@@ -11,13 +11,11 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.par
 
 from core.xml_parser import load_dict, QueryParser, QueryOutput
 from core.score import evaluate_score, print_F1
-import core.query
-from core.export import Export
 from core.tagme_wrapper import tag
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-dev-set.xml")
+                    default="query-data-train-set.xml")
 
 args = parser.parse_args()
 
