@@ -196,87 +196,11 @@ def word_combinations(query):
     for group in subgrups(words):
         combinations.append([" ".join(group[i]) for i in range(len(group))])
     return combinations
-
-def segmentation(search_query, db_conn, parser, take_largest=True):
-    """
-    New version to build upon the baseline
-    :param search_string:
-    :param db_conn:
-    :return:
-    """
-    # search_query = SearchQuery(search_string)
-    # print(search_query, "\n", search_query.true_entities, "\n \n" )
-    # print("entity_search", search_query.search_string)
-
-    del_index = [] #array of positions of deleted stopwords
-
-    last_session_id = None
-    session_entity_linked = []
-    last_query_text = []
-    diff_session_query = []
-    #get_session_info(search_query)
-
-    c = db_conn.cursor()
-    search_query.array, del_index = delete_stop_words(search_query.array)
-    for i in range(len(search_query.array), 0, -1):  # Try combinations with up to n words
-        pos = -1  # position of the words in the string
-        for query_term in window(search_query.array, n=i):
-            pos += 1  # windows is moved to the right
-            options = [query_term]
-            # apply_f_n_combinations(query_term, inflection.pluralize, options)
-            # apply_f_n_combinations(query_term, inflection.singularize, options)
-            # print("options", options)
-            for option in options:
-                # methods to apply to try to find something that works
-                # TODO: Figure out smarter ways to use these
-                operations = [singularize, pluralize, soft_fix, hard_fix]
-                result = get_entities(c, option)
-                while not result and operations:  # apply operations in order until there's results
-                    fixed = operations[0](option)
-                    result = get_entities(c, fixed)
-                    if operations[0] == hard_fix and result and fixed != option:
-                        print("Fixed", option, "to", fixed)
-                    del operations[0]
-                if not result and not operations:
-                    continue
-                entities = [Entity(d[0], d[1]) for d in marshal.loads(result[1])]
-                if not entities:
-                    continue
-                # Create a match with all entities found
-                new_match = SearchMatch(pos, i, entities, option)
-                overlap = check_overlap_simple(new_match, search_query)
-                if overlap:
-                    # print("****-----****-----****-----****-----")
-                    s1 = segment_score(new_match, parser) 
-                    s2 = segment_score(overlap, parser)
-
-                    # print("OVERLAP ", s1,
-                    #      " vs ",s2)
-
-                    #check if score of new segment is higher
-                    if s1 < s2:
-                        #NO, it isn't ! so ignore 
-                        continue
-                    #remove old match
-                    search_query.search_matches.remove(overlap)
-
-                # overlap = check_overlap(new_match, search_query)
-                # if overlap: 
-                #     continue
-                    
-                new_match.chosen_entity = 0
-                search_query.add_match(new_match)
-
-    # #readjust the entitie's position
-    # for match in search_query.search_matches:
-    #     for del_ind in del_index:
-    #         if (del_ind <= match.position):
-    #             match.position += 1
                 
 
 def delete_stop_words(array):
-    stop_words = set(('and', 'or', 'not', 'for', 'in', 'why', 'is', 'how', 
-        'do', 'has', 'to'))
+    stop_words = set(( 'or'))
+    #'in', 'to', 'do', 'for', 'and', 'not','how', 'has', 'why', 'is',
     del_index = []
     for word in array:
         if word in stop_words:
@@ -315,7 +239,7 @@ def segment_score(search_match, parser):
     #weights = [100/parser.avg_word, 1/parser.avg_entities, 1, 1]
     #weights = [1/1.5, 380, 3, 1]
     #weights = [1/parser.avg_word, 0, 1.5, 3]
-    weights = [3, 3, 1, 3]
+    weights = [3, 3, 1  , 3]
 
     score[0] = search_match.word_count
     score[1] = 1/len(search_match.entities)
@@ -351,59 +275,142 @@ def homogeneity(string):
     return(max(1.5-len(counts.items())/2, 0))
 
 
-# def get_session_info(query):
-#     """
-#     Get the following data out of the sessions: 
-#     - basically all entities maped so far in the session stored in session_entity_linked
-#     - stores also the sting difference between the last two queries in the array of strings diff_session_query 
-#     """
-#     current_session_id = query.session.session_id
-#     #need global keyword to modify global var
-#     global last_session_id
-#     global session_entity_linked
-#     global last_query_text
-#     global diff_session_query
+def get_session_info(query):
+    """
+    Get the following data out of the sessions: 
+    - basically all entities maped so far in the session stored in session_entity_linked
+    - stores also the sting difference between the last two queries in the array of strings diff_session_query 
+    """
+    current_session_id = query.session.session_id
+    #need global keyword to modify global var
+    global last_session_id
+    global session_entity_linked
+    global last_query_text
+    global diff_session_query
 
 
-#     # case same session as last one
-#     if (last_session_id == current_session_id):
-#         actual_entity_linked = query.get_chosen_entities()
-#         for i in range(len(actual_entity_linked)):
-#             is_duplicate = False;
-#             for j in range(len(session_entity_linked)):
-#                 #don t store duplicate
-#                 if (actual_entity_linked[i].link == session_entity_linked[j]):
-#                     is_duplicate = True
-#                     break
-#             if ( not is_duplicate): session_entity_linked.append(actual_entity_linked[i].link)
+    # case same session as last one
+    if (last_session_id == current_session_id):
+        actual_entity_linked = query.get_chosen_entities()
+        for i in range(len(actual_entity_linked)):
+            is_duplicate = False;
+            for j in range(len(session_entity_linked)):
+                #don t store duplicate
+                if (actual_entity_linked[i].link == session_entity_linked[j]):
+                    is_duplicate = True
+                    break
+            if ( not is_duplicate): session_entity_linked.append(actual_entity_linked[i].link)
 
 
-#         # diff between last two queries (only added ones to last query),  but beware spellings matters since simple string comparison!
-#         diff_session_query = []
-#         for i in range(len(query.array)):
-#             new_word = True
-#             for j in range(len(last_query_text)):
-#                 if (last_query_text[j] == query.array[i]):
-#                     new_word = False
-#                     break
-#             if (new_word):
-#                 diff_session_query.append(query.array[i])
+        # diff between last two queries (only added ones to last query),  but beware spellings matters since simple string comparison!
+        diff_session_query = []
+        for i in range(len(query.array)):
+            new_word = True
+            for j in range(len(last_query_text)):
+                if (last_query_text[j] == query.array[i]):
+                    new_word = False
+                    break
+            if (new_word):
+                diff_session_query.append(query.array[i])
 
-#         last_query_text = query.array
-#         return
-
-
-#     # case different session or first one
-#     else:
-#         last_session_id = current_session_id
-#         # empty list
-#         session_entity_linked = []
-#         actual_entity_linked = query.get_chosen_entities()
-#         for i in range(len(actual_entity_linked)):
-#             session_entity_linked.append(actual_entity_linked[i].link)
-#         # for diff
-#         last_query_text = query.array
-#         diff_session_query = []
-#         return
+        last_query_text = query.array
+        return
 
 
+    # case different session or first one
+    else:
+        last_session_id = current_session_id
+        # empty list
+        session_entity_linked = []
+        actual_entity_linked = query.get_chosen_entities()
+        for i in range(len(actual_entity_linked)):
+            session_entity_linked.append(actual_entity_linked[i].link)
+        # for diff
+        last_query_text = query.array
+        diff_session_query = []
+        return
+
+
+
+def segmentation(search_query, db_conn, parser, take_largest=True):
+    """
+    New version to build upon the baseline
+    :param search_string:
+    :param db_conn:
+    :return:
+    """
+    # search_query = SearchQuery(search_string)
+    # print(search_query, "\n", search_query.true_entities, "\n \n" )
+    # print("entity_search", search_query.search_string)
+
+    del_index = [] #array of positions of deleted stopwords
+
+    global last_session_id
+    global session_entity_linked
+    global last_query_text
+    global diff_session_query
+    last_session_id = None
+    session_entity_linked = []
+    last_query_text = []
+    diff_session_query = []
+
+    get_session_info(search_query)
+    print(diff_session_query)
+    c = db_conn.cursor()
+    search_query.array, del_index = delete_stop_words(search_query.array)
+    for i in range(len(search_query.array), 0, -1):  # Try combinations with up to n words
+        pos = -1  # position of the words in the string
+        for query_term in window(search_query.array, n=i):
+            pos += 1  # windows is moved to the right
+            options = [query_term]
+            # apply_f_n_combinations(query_term, inflection.pluralize, options)
+            # apply_f_n_combinations(query_term, inflection.singularize, options)
+            # print("options", options)
+            for option in options:
+                # methods to apply to try to find something that works
+                # TODO: Figure out smarter ways to use these
+                operations = [singularize, pluralize, soft_fix, hard_fix]
+                result = get_entities(c, option)
+                while not result and operations:  # apply operations in order until there's results
+                    fixed = operations[0](option)
+                    result = get_entities(c, fixed)
+                    if operations[0] == hard_fix and result and fixed != option:
+                        print("Fixed", option, "to", fixed)
+                    del operations[0]
+                if not result and not operations:
+                    continue
+
+                entities = [Entity(d[0], d[1]) for d in marshal.loads(result[1])]
+                if not entities:
+                    continue
+                # Create a match with all entities found
+                new_match = SearchMatch(pos, i, entities, option)
+                overlap = check_overlap_simple(new_match, search_query)
+                # if overlap:
+                #     # print("****-----****-----****-----****-----")
+                #     s1 = segment_score(new_match, parser) 
+                #     s2 = segment_score(overlap, parser)
+
+                #     # print("OVERLAP ", s1,
+                #     #      " vs ",s2)
+
+                #     #check if score of new segment is higher
+                #     if s1 < s2:
+                #         #NO, it isn't ! so ignore 
+                #         continue
+                #     #remove old match
+                #     search_query.search_matches.remove(overlap)
+
+                overlap = check_overlap(new_match, search_query)
+                if overlap: 
+                    continue
+                    
+                new_match.chosen_entity = 0
+                search_query.add_match(new_match)
+
+    # #readjust the entitie's position
+    # for match in search_query.search_matches:
+    #     print(match)
+    #     for del_ind in del_index:
+    #         if (del_ind <= match.position):
+    #             match.position += 1
