@@ -15,7 +15,8 @@ sys.path.append("./lib/odswriter/")
 
 from core.xml_parser import QueryParser, load_dict
 from core.score import evaluate_score, print_F1
-import core.query
+import core.query 
+from core.query import Session_info
 from core.export import Export
 #from baseline.baseline import search_entities
 from core.segmentation import segmentation
@@ -36,12 +37,16 @@ WIKI_NAMES = "enwiki-latest-all-e-in-ns0"
 
 ENTITY_CHECKER_MAP = "entity_map"
 
+
 def main():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
     exporter = Export()
+    
+    session_info_ob=Session_info()
+    
     for query in parser.query_array:
-        segmentation(query, db_conn, parser)
+        segmentation(query, db_conn, parser,session_info_ob)
         query.spell_check()
         for true_match in query.true_entities:
             true_match.get_chosen_entity().validate()

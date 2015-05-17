@@ -25,6 +25,12 @@ EXPORT_COLORS = {
     "FP-Corresponding_true_entity": "red"
 }
 
+class Session_info(object):
+    def __init__(self):
+        self.last_session_id = None
+        self.session_entity_linked = []
+        self.last_query_text = []
+        self.diff_session_query = []
 
 class SearchSession(list):
     # store session id and otherwise behave like a list

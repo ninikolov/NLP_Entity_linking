@@ -3,7 +3,6 @@ Functions used to perform segmentation on the queries
 """
 from itertools import islice
 import marshal
-
 from inflection import pluralize, singularize
 from collections import defaultdict
 from operator import itemgetter
@@ -275,7 +274,7 @@ def homogeneity(string):
     return(max(1.5-len(counts.items())/2, 0))
 
 
-def get_session_info(query):
+def get_session_info(query,session_info_ob):
     """
     Get the following data out of the sessions: 
     - basically all entities maped so far in the session stored in session_entity_linked
@@ -283,56 +282,51 @@ def get_session_info(query):
     """
     current_session_id = query.session.session_id
     #need global keyword to modify global var
-    global last_session_id
-    global session_entity_linked
-    global last_query_text
-    global diff_session_query
-
 
     # case same session as last one
-    if (last_session_id == current_session_id):
+    if (session_info_ob.last_session_id == current_session_id):
         actual_entity_linked = query.get_chosen_entities()
         for i in range(len(actual_entity_linked)):
             is_duplicate = False;
-            for j in range(len(session_entity_linked)):
+            for j in range(len(session_info_ob.session_entity_linked)):
                 #don t store duplicate
-                if (actual_entity_linked[i].link == session_entity_linked[j]):
+                if (actual_entity_linked[i].link == session_info_ob.session_entity_linked[j]):
                     is_duplicate = True
                     break
-            if ( not is_duplicate): session_entity_linked.append(actual_entity_linked[i].link)
+            if ( not is_duplicate): session_info_ob.session_entity_linked.append(actual_entity_linked[i].link)
 
 
         # diff between last two queries (only added ones to last query),  but beware spellings matters since simple string comparison!
-        diff_session_query = []
+        session_info_ob.diff_session_query = []
         for i in range(len(query.array)):
             new_word = True
-            for j in range(len(last_query_text)):
-                if (last_query_text[j] == query.array[i]):
+            for j in range(len(session_info_ob.last_query_text)):
+                if (session_info_ob.last_query_text[j] == query.array[i]):
                     new_word = False
                     break
             if (new_word):
-                diff_session_query.append(query.array[i])
+                session_info_ob.diff_session_query.append(query.array[i])
 
-        last_query_text = query.array
+        session_info_ob.last_query_text = query.array
         return
 
 
     # case different session or first one
     else:
-        last_session_id = current_session_id
+        session_info_ob.last_session_id = current_session_id
         # empty list
-        session_entity_linked = []
+        session_info_ob.session_entity_linked = []
         actual_entity_linked = query.get_chosen_entities()
         for i in range(len(actual_entity_linked)):
-            session_entity_linked.append(actual_entity_linked[i].link)
+            session_info_ob.session_entity_linked.append(actual_entity_linked[i].link)
         # for diff
-        last_query_text = query.array
-        diff_session_query = []
+        session_info_ob.last_query_text = query.array
+        session_info_ob.diff_session_query = []
         return
 
 
 
-def segmentation(search_query, db_conn, parser, take_largest=True):
+def segmentation(search_query, db_conn, parser,session_info_ob, take_largest=True):
     """
     New version to build upon the baseline
     :param search_string:
@@ -345,16 +339,9 @@ def segmentation(search_query, db_conn, parser, take_largest=True):
 
     del_index = [] #array of positions of deleted stopwords
 
-    global last_session_id
-    global session_entity_linked
-    global last_query_text
-    global diff_session_query
-    last_session_id = None
-    session_entity_linked = []
-    last_query_text = []
-    diff_session_query = []
+    diff_session_query=session_info_ob.diff_session_query
 
-    get_session_info(search_query)
+    get_session_info(search_query,session_info_ob)
     print(diff_session_query)
     c = db_conn.cursor()
     search_query.array, del_index = delete_stop_words(search_query.array)
