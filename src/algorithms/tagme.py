@@ -14,12 +14,13 @@ from core.xml_parser import load_dict, QueryParser, QueryOutput
 from core.segmentation import segmentation
 from core.score import evaluate_score, print_F1
 from core.export import Export
+from core.query import Session_info
 import numpy as np
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-train-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
@@ -210,10 +211,11 @@ def run():
     writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-tagme."))
     db_conn = load_dict(DATA_DIR + DICT, fix=False)
     exporter = Export()
+    session_info_ob=Session_info()
 
     for query in parser.query_array:
         query.spell_check()
-        segmentation(query, db_conn, parser, take_largest=True)
+        segmentation(query, db_conn, parser, session_info_ob, take_largest=True)
         if DEBUG:
             pass
             # print("Search matches: ", query.search_matches)

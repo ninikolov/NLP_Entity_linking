@@ -15,7 +15,8 @@ from .query import SearchQuery, SearchMatch, Entity, SearchSession
 # session -> mult. query
 
 FIX_STRING = False
-IGNORE_NO_MENTIONS = True
+# Needs to be set to False if annotating unlabelled data
+IGNORE_NO_MENTIONS = False
 
 wiki_base = "http://en.wikipedia.org/wiki/"
 
@@ -95,8 +96,9 @@ class QueryParser():
             for query in session.find_all("query"):
                 query_str = unquote(query.find_all("text")[0].text)
                 query_str = query_str.replace('"', "")
+                query_starttime = query['starttime']
 
-                new_query = SearchQuery(query_str, search_session)
+                new_query = SearchQuery(query_str, search_session, query_starttime)
 
                 new_query.with_double_quotes = unquote(query.find_all("text")[0].text)
                 curr_pos = 0
@@ -170,21 +172,21 @@ class QueryOutput():
         """
         Generate the <query> tag
         """
-        s_tag = self.soup.find(id=query.session.session_id)
+        s_tag = self.webscope.find("session", id=query.session.session_id)
         if not s_tag:
             s_tag = self.write_session(name=query.session.session_id)
-            starttime = "1"
-        else:
-            queries = s_tag.find_all("query")
-            if not queries:
-                starttime = "1"
-            else:
-                starttime = 1
-                for q in queries:
-                    if int(q["starttime"]) > starttime:
-                        starttime = int(q["starttime"])
-                starttime = str(starttime + 1)
-        query_xml = self.soup.new_tag("query", starttime=starttime)
+            # starttime = query.starttime
+        # else:
+        #     queries = s_tag.find_all("query")
+        #     if not queries:
+        #         starttime = "1"
+        #     else:
+        #         starttime = 1
+        #         for q in queries:
+        #             if int(q["starttime"]) > starttime:
+        #                 starttime = int(q["starttime"])
+        #         starttime = str(starttime + 1)
+        query_xml = self.soup.new_tag("query", starttime=query.starttime)
         text = self.soup.new_tag("text")
         text.append(self.cdata(query.search_string))
         query_xml.append(text)

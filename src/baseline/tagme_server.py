@@ -15,7 +15,7 @@ from core.tagme_wrapper import tag
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-train-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 

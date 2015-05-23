@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-import pdb
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
@@ -11,6 +10,9 @@ from core.xml_parser import load_dict, QueryParser
 from core.segmentation import segmentation
 from core.score import evaluate_score, print_F1
 from algorithms.tagme import prune
+from core.query import Session_info
+from algorithms.tagme import *
+import copy
 
 
 parser = argparse.ArgumentParser()
@@ -48,11 +50,10 @@ class Dynamic_state(object):
         self.entity_index = entity_index
 
 
-
 def reconstruct_best_solution(state_matrix, matches):
     global COUNTER
     if len(state_matrix) >= 1:  # avoid case where matches are initially empty
-        #first find best entity for last match
+        # first find best entity for last match
         max_val = 0;
         #    max_state=state_matrix[len(state_matrix)-1][0] #initialized to first one, to make nure not None!
         #    pdb.set_trace()
@@ -105,9 +106,9 @@ def build_dynamic_prog_matrix(matches, state_matrix, session_entity_linked, limi
         target_match = matches[index]
         current_states = []
         other_entitites = target_match.get_entities_limit(size_limit=limit,
-                                                          prob_limit=0)  #otherwise other entities can be 0!
+                                                          prob_limit=0)  # otherwise other entities can be 0!
 
-        #for first state
+        # for first state
         entity_index = 0
         if index == 0:
 
@@ -181,8 +182,8 @@ def build_dynamic_prog_matrix(matches, state_matrix, session_entity_linked, limi
                         max_val = 0.00001
                         max_state.value = max_val
                         ##print in yellow
-                    #                        print("{0}{1}{2}".format('\033[93m',"Max value was 0 in state_matrix!!",'\033[0m'))
-                    #                    print("For possible entity ", entity.link, " value is ", new_val)
+                        #                        print("{0}{1}{2}".format('\033[93m',"Max value was 0 in state_matrix!!",'\033[0m'))
+                        #                    print("For possible entity ", entity.link, " value is ", new_val)
 
                 #set best possible state in matrix        
                 current_states.append(max_state)
@@ -199,7 +200,7 @@ def get_session_info(query):
     - stores also the sting difference between the last two queries in the array of strings diff_session_query 
     """
     current_session_id = query.session.session_id
-    #need global keyword to modify global var
+    # need global keyword to modify global var
     global last_session_id
     global session_entity_linked
     global last_query_text
@@ -247,20 +248,18 @@ def get_session_info(query):
         diff_session_query = []
         return
 
-from algorithms.tagme import *
-import copy
 
-def get_confidence_score(query,total_coh):
-    
+def get_confidence_score(query, total_coh):
     # hom many (non stop) words of initial query are matched (ratio)
-    #ignore stop words?
-    ratio_score=len(query.get_chosen_entities())/(len(query.array));
-    
+    # ignore stop words?
+    ratio_score = len(query.get_chosen_entities()) / (len(query.array));
+
     #also use coherence score from pruning
-    weight_coh=1.3
-    weight_ratio=1
-    confidence_score=total_coh*weight_coh+ratio_score*weight_ratio/(weight_coh+weight_ratio)
+    weight_coh = 1.3
+    weight_ratio = 1
+    confidence_score = total_coh * weight_coh + ratio_score * weight_ratio / (weight_coh + weight_ratio)
     return confidence_score
+
 
 def combined():
     """
@@ -268,8 +267,9 @@ def combined():
     :return:
     """
     parser = QueryParser(DATA_DIR + TRAIN_XML)
-    writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-tagme."))
+    writer = QueryOutput(DATA_DIR + TRAIN_XML.replace(".", "-combined."))
     db_conn = load_dict(DATA_DIR + DICT, fix=False)
+    session_info_ob=Session_info()
     exporter = Export()
 
     tagme_count = 0
@@ -282,8 +282,8 @@ def combined():
 
         query_dyn.spell_check()
         query_tagme.spell_check()
-        entities = segmentation(query_tagme, db_conn, parser, take_largest=True)
-        entities = segmentation(query_dyn, db_conn, parser, take_largest=True)
+        entities = segmentation(query_tagme, db_conn, parser,session_info_ob, take_largest=True)
+        entities = segmentation(query_dyn, db_conn, parser,session_info_ob, take_largest=True)
 
         # Tagme
         for index in range(len(query_tagme.search_matches)):  # for each match
@@ -315,18 +315,18 @@ def combined():
         for true_match in query_dyn.true_entities:
             true_match.get_chosen_entity().validate()
         final, total_coh_dyn = prune(query_dyn, theta=0.25)
-        
-        confidence_score_dyn=get_confidence_score(query_dyn,total_coh_dyn)
-        print("Conficdence score for dynamic solution ",confidence_score_dyn)
-        
-        confidence_score_tagme=get_confidence_score(query_tagme,total_coh_tagme)
-        print("Conficdence score for tagme solution ",confidence_score_tagme)
+
+        confidence_score_dyn = get_confidence_score(query_dyn, total_coh_dyn)
+        print("Conficdence score for dynamic solution ", confidence_score_dyn)
+
+        confidence_score_tagme = get_confidence_score(query_tagme, total_coh_tagme)
+        print("Conficdence score for tagme solution ", confidence_score_tagme)
         print("Coh of Tagme:", total_coh_tagme)
         print("Coh of Dynamic:", total_coh_dyn)
-        if total_coh_tagme > total_coh_dyn:
+        if confidence_score_tagme > confidence_score_dyn:
             query = query_tagme
             tagme_count += 1
-        elif total_coh_tagme == total_coh_dyn:
+        elif confidence_score_tagme == confidence_score_dyn:
             query = query_tagme
             same += 1
         else:
@@ -344,13 +344,15 @@ def combined():
     print("Times we chose TAGME:", tagme_count, "; Dynamic:", dyn_count, "same score:", same)
     return print_F1(parser)
 
+
 def dynamic():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
+    session_info_ob=Session_info()
 
     for query in parser.query_array:
         query.spell_check()
-        segmentation(query, db_conn, parser, take_largest=True)
+        segmentation(query, db_conn, parser,session_info_ob, take_largest=True)
         # print("Search matches: ", query.search_matches)
         get_session_info(query)
         # pdb.set_trace() #for debugging
@@ -362,7 +364,7 @@ def dynamic():
         # reconstruct best solution
         reconstruct_best_solution(state_matrix, query.search_matches)
         # Pruning from the Tagme implementation
-        final, total_coh = prune(query, theta=0.2)
+        final, total_coh = prune(query, theta=0.25)
         # print("Final entities after pruning: ", final)
 
         for match in query.search_matches:

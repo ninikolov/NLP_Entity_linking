@@ -45,13 +45,14 @@ class SearchSession(list):
 
 
 class SearchQuery(object):
-    def __init__(self, search_string, session=None):
+    def __init__(self, search_string, session=None, starttime=None):
         self.search_string = search_string
         # self.array = re.findall(r"[\w]+", search_string)
         self.array = self.search_string.split()
         self.search_matches = []
         self.true_entities = []
         self.session = session
+        self.starttime = starttime
 
     def add_match(self, match):
         # match: SearchMatch
@@ -258,6 +259,7 @@ class Entity(object):
     def __init__(self, link, probability):
         self.link = link
         self.probability = float(probability)
+        self.link = unquote(self.link)
 
     def validate(self):
         if self.link in entity_correction_mapper:
@@ -284,6 +286,7 @@ class Entity(object):
                 import sys
 
                 print("Unexpected error:", sys.exc_info()[0])
+        self.link = unquote(self.link)
 
     def __repr__(self):
         return "<Entity: %s %f>" % (self.link, self.probability)

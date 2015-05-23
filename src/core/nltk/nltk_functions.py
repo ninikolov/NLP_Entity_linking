@@ -122,4 +122,4 @@ if __name__ == '__main__':
     tags = tag(s)
     print(tags)
     # print(chunk(tag(s)))
-    print(nounify("rove's"))
+    print(nounify("paint"))

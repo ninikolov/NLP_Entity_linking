@@ -19,10 +19,12 @@ from core.export import Export
 from core.segmentation import segmentation
 from algorithms.tagme import prune
 from baseline.baseline import segmentation_baseline
+from core.query import Session_info
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-train-set.xml")
+                    default="query-data-dev-set.xml")
 
 args = parser.parse_args()
 
@@ -30,7 +32,7 @@ THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../../data/"
 TRAIN_XML = args.testfile
-DICT = "crosswikis-dict-preprocessed_new"
+DICT = "crosswikis-dict-preprocessed_new_3"
 WIKI_NAMES = "enwiki-latest-all-e-in-ns0"
 
 ENTITY_CHECKER_MAP = "entity_map"
@@ -39,9 +41,10 @@ def main():
     parser = QueryParser(DATA_DIR + TRAIN_XML)
     db_conn = load_dict(DATA_DIR + DICT)
     exporter = Export()
+    session_info_ob=Session_info()
     for query in parser.query_array:
         query.spell_check()
-        segmentation(query, db_conn, parser)
+        segmentation(query, db_conn, parser, session_info_ob)
         # Validate entity names
         for true_match in query.true_entities:
             true_match.get_chosen_entity().validate()
@@ -50,7 +53,7 @@ def main():
                 match.get_chosen_entity().validate()
             except:
                 continue
-        prune(query, theta=0.2) # TAGME pruning
+        prune(query, theta=0.3) # TAGME pruning
         evaluate_score(query, parser)
         query.visualize()
         query.add_to_export(exporter)

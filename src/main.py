@@ -24,7 +24,7 @@ from algorithms.tagme import prune
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--testfile", "-t", help="Select XML file",
-                    default="query-data-dev-set.xml")
+                    default="query-data-train-set.xml")
 
 args = parser.parse_args()
 

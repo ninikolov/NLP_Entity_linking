@@ -29,7 +29,7 @@ THIS_FILE = os.path.realpath(__file__)
 THIS_DIR = os.path.dirname(THIS_FILE)
 DATA_DIR = THIS_DIR + "/../../data/"
 TRAIN_XML = args.testfile
-DICT = "crosswikis-dict-preprocessed" # Original crosswiki
+DICT = "crosswikis-dict-preprocessed"  # Original crosswiki
 # DICT = "crosswikis-dict-preprocessed_new" # New Crosswiki
 
 
@@ -55,10 +55,10 @@ def segmentation_baseline(search_query, db_conn, take_largest=True):
                 continue
             # Create a match with all entities found
             new_match = SearchMatch(pos, i, entities, query_term)
-            if take_largest: # take largest match
+            if take_largest:  # take largest match
                 if check_overlap(new_match, search_query):
                     continue
-            new_match.chosen_entity = 0 # choose first entity
+            new_match.chosen_entity = 0  # choose first entity
             search_query.add_match(new_match)
 
 
@@ -73,6 +73,7 @@ def run():
     exporter.export()
     parser.print_segmentation_stat()
     print_F1(parser)
+
 
 if __name__ == '__main__':
     run()
