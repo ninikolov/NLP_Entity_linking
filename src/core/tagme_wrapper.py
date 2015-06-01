@@ -1,8 +1,12 @@
 """
 Wrapper for the TAGME API http://tagme.di.unipi.it
+
+Redistribution :
+This tagme key is intended to be used by the authors of the code only,
+Please refrain from using it. 
+You can get your free tagme key at http://tagme.di.unipi.it/tagme_help.html
 """
 
-BASE_URL_SCORE = "http://tagme.di.unipi.it/rel?key=tagme-NLP-ETH-2015&lang=en&tt="
 url = "http://tagme.di.unipi.it/rel"
 tag_url = "http://tagme.di.unipi.it/tag"
 wiki_synonyms_url = "http://wikisynonyms.ipeirotis.com/api/"
